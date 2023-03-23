@@ -3,36 +3,33 @@ TOY LANGUAGE TEMPLATES
 CONDITIONAL STATEMENTS
 ------------------------------------------------------------------
 
-IF THIS [condition] IS TRUE
-DO THIS 
-	=>
-		
+IF [condition] IS TRUE
+DO
+{
 
 
+} 
+ELSE IF [condition] IS TRUE
+DO
+{
+	
 
-	<=
-OTHERWISE IF THIS [condition] IS TRUE
-DO THIS
-	=>
-
-
-	<=
-OTHERWISE JUST
-DO THIS
-	=>
-
+}	
+ELSE JUST
+DO
+{
 
 
-	<=
+}
 
 
 
 (Switch statement)
 ----------------------
-IF THIS [expression]
-IS [expr] => [statement] 
-IS [expr] => [statement]
-DEFAULT => [statement]
+IF [expression]
+IS [expr] DO [statement] ;
+IS [expr] DO [statement] ;
+DEFAULT DO [statement] ;
 
 
 
@@ -42,33 +39,33 @@ LOOPS
 
 (While loop - most general)
 -------------------------------
-WHILE THIS [condition] IS TRUE   //this is a general condition loop
-KEEP DOING THIS 
-	=>
+WHILE [condition] IS TRUE   //this is a general condition loop
+KEEP DOING 
+{
 
 
-	<=
+}
 
 
 
 
 (specific count loop - original)
 ------------------
-DO THIS [#] TIMES  //this is a specific count loop
-	=>
+DO [expression] TIMES  //this is a specific count loop
+{
 
-	<=
+}
 
 
 (Indexed For loop)                
 -------------------------------------------------------------
-FOR INDEX [variable] START AT INDEX [#] AND WHILE [condition]
-DO THIS
-	=>
+FOR INDEX [variable] START AT [expression] AND WHILE [condition]
+DO
+{
 
 
-	<=
-UPDATE [assignment]
+}
+UPDATE [assignment] ;
 
 
 
@@ -78,10 +75,10 @@ Example:
 
 FOR INDEX i START AT 0 AND WHILE i < 10
 DO THIS 
-	=>
+{
 
-	<= 
-AND UPDATE i++
+} 
+UPDATE i++
 
 -------------------------------------------------------------------------------
 
@@ -90,47 +87,69 @@ FUNCTIONS (no procedures)
 
 Definiton
 
+function name(type param1, type param2 ... type paramN) return int
+{
 
-FUNCTION NAME
-	INPUT:
-	DO THIS => <=
-	OUTPUT:
+....
 
-OR
+return i;
 
-RECIPE NAME
-	WITH THESE INGREDIENTS(a, b, c)
-	DO THIS => <=
-	GIVE ME BACK THIS 
+}
 
-calls ?
 
+
+name(arg1, arg2 ... argN);
+
+--------------------------------------------------------------------------------
+Comments
 ---------------------------------------------------------------------------------
-Note:    //comment
-
+//
 -------------------------------------------------------------------------------
 Records/Structs
 ---------------------------------------------------------------------------------
 BLUEPRINT FOR [RECORD NAME]
-	=>
-	[field name] : [type]
+	{
+	  type fieldName ;
 
-	<=
+	}
 
 
 -------------------------------------------------------------------------------------
 Types
 -------------------------------------------------------------------------------------
-Integer
-Decimal
-Boolean / Claim
-Char
+int
+dec
+bool
+char
+nothing //void
 Address??
-String / Text
-
+String
+-----------------------------------------------------------------------
+ID / Assignment
+-----------------------------------------------------------------------
 i like declarations at top of scope b/c it makes it clear what youre dealing with. actually idk
+Java style declaration / definition
 i -> ref //pass by ref 
-i = val
-  
+final int i = val
+int i, j = val
+75 numbers / letters for IDs
+----------------------------------------------------
+Boolean Operators
+----------------------------------------------------
+AND
+OR
+NOT
+----------------------------------------------------
+Print To Output
+----------------------------------------------------
 
 
+Print()
+
+
+----------------------------------------------------
+ARRAYS
+----------------------------------------------------
+Array type name = [element,.....] ; 
+
+name[i] ;
