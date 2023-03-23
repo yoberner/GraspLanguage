@@ -1,0 +1,136 @@
+TOY LANGUAGE TEMPLATES
+------------------------------------------------------------------
+CONDITIONAL STATEMENTS
+------------------------------------------------------------------
+
+IF THIS [condition] IS TRUE
+DO THIS 
+	=>
+		
+
+
+
+	<=
+OTHERWISE IF THIS [condition] IS TRUE
+DO THIS
+	=>
+
+
+	<=
+OTHERWISE JUST
+DO THIS
+	=>
+
+
+
+	<=
+
+
+
+(Switch statement)
+----------------------
+IF THIS [expression]
+IS [expr] => [statement] 
+IS [expr] => [statement]
+DEFAULT => [statement]
+
+
+
+------------------------------------------------------------------
+LOOPS
+------------------------------------------------------------------
+
+(While loop - most general)
+-------------------------------
+WHILE THIS [condition] IS TRUE   //this is a general condition loop
+KEEP DOING THIS 
+	=>
+
+
+	<=
+
+
+
+
+(specific count loop - original)
+------------------
+DO THIS [#] TIMES  //this is a specific count loop
+	=>
+
+	<=
+
+
+(Indexed For loop)                
+-------------------------------------------------------------
+FOR INDEX [variable] START AT INDEX [#] AND WHILE [condition]
+DO THIS
+	=>
+
+
+	<=
+UPDATE [assignment]
+
+
+
+
+
+Example:
+
+FOR INDEX i START AT 0 AND WHILE i < 10
+DO THIS 
+	=>
+
+	<= 
+AND UPDATE i++
+
+-------------------------------------------------------------------------------
+
+FUNCTIONS (no procedures)
+-------------------------------------------------------------------------------
+
+Definiton
+
+
+FUNCTION NAME
+	INPUT:
+	DO THIS => <=
+	OUTPUT:
+
+OR
+
+RECIPE NAME
+	WITH THESE INGREDIENTS(a, b, c)
+	DO THIS => <=
+	GIVE ME BACK THIS 
+
+calls ?
+
+---------------------------------------------------------------------------------
+Note:    //comment
+
+-------------------------------------------------------------------------------
+Records/Structs
+---------------------------------------------------------------------------------
+BLUEPRINT FOR [RECORD NAME]
+	=>
+	[field name] : [type]
+
+	<=
+
+
+-------------------------------------------------------------------------------------
+Types
+-------------------------------------------------------------------------------------
+Integer
+Decimal
+Boolean / Claim
+Char
+Address??
+String / Text
+
+i like declarations at top of scope b/c it makes it clear what youre dealing with. actually idk
+i -> ref //pass by ref 
+i = val
+  
+
+
