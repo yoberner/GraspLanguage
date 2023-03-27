@@ -1,10 +1,10 @@
-grammar Pascal;
+grammar GraspDraft;
 
 @header {
-    package antlr4;
-    import java.util.HashMap;
-    import edu.yu.compilers.intermediate.symtable.SymTableEntry;
-    import edu.yu.compilers.intermediate.type.Typespec;
+    // package antlr4;
+    // import java.util.HashMap;
+    // import edu.yu.compilers.intermediate.symtable.SymTableEntry;
+    // import edu.yu.compilers.intermediate.type.Typespec;
 }
 
 program           : programHeader block '.' ;
