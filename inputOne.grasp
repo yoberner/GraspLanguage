@@ -1,0 +1,70 @@
+program Test;
+
+var
+    i, j, k : integer;
+    x, y : real;
+    p, q : boolean;
+    str, txt : string;
+	ch : char;
+    
+DO {
+
+	// test if:
+
+    i := 1;
+    j := 2;
+    
+	if (i = j) is true do {
+		x := 3.14;
+	}
+	else do {
+		x := -5;
+	}
+
+    print('i = ', i, ', j = ', j, ', x = ', x:5:2, ', y = ', y:5:2);
+
+
+	// test while:
+
+	i := 1;
+    while i <= 5 do begin
+        writeln('i = ', i);
+        i := i + 1
+    end;
+
+	i := 1;
+	while (i <= 5) is true keep doing {
+		print('i = ', i);
+		i := i + 1;
+	}
+
+
+	// test for:
+
+	for i := 1 to 5 do writeln('i = ', i);
+
+	for index i start at 1 and while (i <= 5) do this {
+		print('i = ', i);
+	}
+	update i++;
+
+
+	// test function:
+
+	function cube(integer x): integer {
+		cube := x * x * x;
+	}
+
+	print('3 cubed, cubed = ', cube(3));
+
+
+	// test case:
+
+	if (i+1):
+	is 1 do j := i;
+	is -8 do j := 8*i;
+	is 5 or 7 or 4 do j := 574*i;
+	default do j := 0;
+
+	print('j = ', j);
+}

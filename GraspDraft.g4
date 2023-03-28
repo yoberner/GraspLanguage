@@ -92,14 +92,12 @@ statement : compoundStatement
           | assignmentStatement
           | ifStatement
           | caseStatement
-          | repeatStatement
           | whileStatement
           | forStatement
           | writeStatement
           | writelnStatement
           | readStatement
           | readlnStatement
-          | procedureCallStatement
           | emptyStatement
           ;
 
@@ -268,7 +266,7 @@ FUNCTION  : F U N C T I O N ;
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
 INTEGER    : [0-9]+ ;
 
-DEC        : INTEGER '.' INTEGER
+DECIMAL    : INTEGER '.' INTEGER
            | INTEGER ('e' | 'E') ('+' | '-')? INTEGER
            | INTEGER '.' INTEGER ('e' | 'E') ('+' | '-')? INTEGER
            ;
