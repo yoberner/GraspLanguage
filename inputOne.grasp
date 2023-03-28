@@ -1,70 +1,138 @@
 program Test;
 
-var
-    i, j, k : integer;
-    x, y : real;
-    p, q : boolean;
-    str, txt : string;
-	ch : char;
-    
+FINAL {
+	integer FOO = 1;
+}
+
+TYPE {
+	Person = blueprint {
+		integer id;
+		String name;
+	};
+
+	Array integer numbers = [1, 2, 3, 4, 5];
+}
+
+var {
+	integer i, j, k, l;
+	decimal x, y;
+	boolean b;
+	character c;
+	string s;
+}
+
+FUNCTION cube(integer x) returns integer {
+	integer cube = x * x * x;
+	return cube;
+}
+
 DO {
+
+	//test array
+	println(numbers);
+
+
+	// test boolean:
+
+	if not b is true {
+		println('b is false');
+	}
+	else {
+		println('b is true');
+	}
+
+
+	// test operators:
+
+	k = 1 + 2 * 3;
+	println('k = ', k);
+
+	if (k != 1 or k != 2) is true {
+		println('k is not 1');
+	}
+
+	l = 1;
+	k = 2;
+
+	if ((k == 2) and (l == 1)) is true {
+		println('k = 2 and l = 1');
+	}
+
+	k = 10;
+	if (k > 1 and k < 20) is true {
+		println('k is between 1 and 20');
+	}
+	if (k >= 1 and k <= 20) is true {
+		println('k is between 1 and 20 inclusive');
+	}
+
+
+	// test constants:
+	println('FOO = ', FOO);
+
+	// test assignment:
+
+	b = 1;
+	if b is true {
+		println('b is true');
+	}
+	else {
+		println('b is false');
+	}
+
+
+	// test string:
+
+	s = 'Hello, world!';
+	println(s);
+
 
 	// test if:
 
-    i := 1;
-    j := 2;
+    i = 1;
+    j = 2;
     
-	if (i = j) is true do {
-		x := 3.14;
+	if (i = j) is true {
+		x = 3.14;
 	}
-	else do {
-		x := -5;
+	else {
+		x = -5;
 	}
 
-    print('i = ', i, ', j = ', j, ', x = ', x:5:2, ', y = ', y:5:2);
+    println('i = ', i, ', j = ', j, ', x = ', x:5:2, ', y = ', y:5:2);
 
 
 	// test while:
 
-	i := 1;
-    while i <= 5 do begin
-        writeln('i = ', i);
-        i := i + 1
-    end;
-
-	i := 1;
+	i = 1;
 	while (i <= 5) is true keep doing {
-		print('i = ', i);
-		i := i + 1;
+		println('i = ', i);
+		i = i + 1;
 	}
 
 
 	// test for:
 
-	for i := 1 to 5 do writeln('i = ', i);
+	for i = 1 to 5 do println('i = ', i);
 
-	for index i start at 1 and while (i <= 5) do this {
-		print('i = ', i);
+	for index i start at 1 and while (i <= 5) keep doing {
+		println('i = ', i);
 	}
 	update i++;
 
 
 	// test function:
-
-	function cube(integer x): integer {
-		cube := x * x * x;
-	}
-
-	print('3 cubed, cubed = ', cube(3));
+	println('3 cubed = ', cube(3));
 
 
 	// test case:
 
 	if (i+1):
-	is 1 do j := i;
-	is -8 do j := 8*i;
-	is 5 or 7 or 4 do j := 574*i;
-	default do j := 0;
+	is 1 do j = i;
+	is -8 do j = 8*i;
+	is 5 or 7 or 4 do j = 574*i;
+	default do j = 0;
 
-	print('j = ', j);
+	println('j = ', j);
+
 }

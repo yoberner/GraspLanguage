@@ -1,4 +1,4 @@
-grammar Grasp;
+grammar Pascal;
 
 @header {
     package antlr4;

@@ -1,4 +1,4 @@
-grammar GraspDraft;
+grammar Grasp;
 
 @header {
     // package antlr4;
@@ -18,7 +18,7 @@ block         : declarations compoundStatement ;
 declarations  : ( constantsPart ';' )? ( typesPart ';' )? 
                 ( variablesPart ';' )? ( routinesPart ';')? ;
 
-constantsPart           : CONST constantDefinitionsList ;
+constantsPart           : FINAL '{' constantDefinitionsList '}' ;
 constantDefinitionsList : constantDefinition ( ';' constantDefinition )* ;
 constantDefinition      : constantIdentifier '=' constant ;
 
@@ -33,7 +33,7 @@ constant            locals [ Typespec type = null, Object value = null ]
 
 sign : '-' | '+' ;
 
-typesPart           : TYPE typeDefinitionsList ;
+typesPart           : TYPE '{' typeDefinitionsList '}' ;
 typeDefinitionsList : typeDefinition ( ';' typeDefinition )* ;
 typeDefinition      : typeIdentifier '=' typeSpecification ;
 
@@ -64,18 +64,17 @@ recordType          locals [ SymTableEntry entry = null ]
     : BLUEPRINT '{' recordFields ';'? '}' ;
 recordFields : variableDeclarationsList ;
            
-variablesPart            : VAR variableDeclarationsList ;
+variablesPart            : VAR '{' variableDeclarationsList '}';
 variableDeclarationsList : variableDeclarations ( ';' variableDeclarations )* ;
-variableDeclarations     : variableIdentifierList ':' typeSpecification ;
+variableDeclarations     : typeSpecification variableIdentifierList;
 variableIdentifierList   : variableIdentifier ( ',' variableIdentifier )* ;
 
 variableIdentifier  locals [ Typespec type = null, SymTableEntry entry = null ] 
     : IDENTIFIER ;
 
 routinesPart      : routineDefinition ( ';' routineDefinition)* ;
-routineDefinition : ( procedureHead | functionHead ) ';' block ;
-procedureHead     : PROCEDURE routineIdentifier parameters? ;
-functionHead      : FUNCTION  routineIdentifier parameters? ':' typeIdentifier ;
+routineDefinition : ( functionHead ) block ;
+functionHead      : FUNCTION  routineIdentifier parameters? RETURNS typeIdentifier ;
 
 routineIdentifier   locals [ Typespec type = null, SymTableEntry entry = null ]
     : IDENTIFIER ;
@@ -99,6 +98,7 @@ statement : compoundStatement
           | readStatement
           | readlnStatement
           | emptyStatement
+          | returnStatement
           ;
 
 compoundStatement : (DO)? '{' statementList '}' ;
@@ -106,6 +106,8 @@ emptyStatement : ;
      
 statementList       : statement ( ';' statement )* ;
 assignmentStatement : lhs '=' rhs ;
+
+returnStatement : RETURN expression ;
 
 lhs locals [ Typespec type = null ] 
     : variable ;
@@ -129,7 +131,7 @@ caseConstant    locals [ Typespec type = null, Object value = null ]
 whileStatement  : WHILE expression IS TRUE KEEP DOING statement ;
 
 forStatement : FOR INDEX variable START AT expression AND WHILE expression
-               KEEP DOING statement UPDATE assignmentStatement ;
+               KEEP DOING statement UPDATE assignmentStatement ';' ;
 doStatement : DO expression TIMES statement ;
 
 argumentList : argument ( ',' argument )* ;
@@ -185,6 +187,7 @@ integerConstant : INTEGER ;
 decConstant     : DECIMAL;
 characterConstant : CHARACTER ;
 stringConstant    : STRING ;
+booleanConstant   : BOOLEAN ;
        
 relOp : '=' | '!=' | '<' | '<=' | '>' | '>=' ;
 addOp : '+' | '-' | OR ;
@@ -219,6 +222,7 @@ fragment Z : ('z' | 'Z') ;
 
 PROGRAM   : P R O G R A M ;
 CONST     : C O N S T ;
+FINAL     : F I N A L ;
 TYPE      : T Y P E ;
 ARRAY     : A R R A Y ;
 OF        : O F ;
@@ -262,9 +266,13 @@ READ      : R E A D ;
 READLN    : R E A D L N ;
 PROCEDURE : P R O C E D U R E ;
 FUNCTION  : F U N C T I O N ;
+BLUEPRINT : B L U E P R I N T ;
+RETURNS    : R E T U R N S ;
+RETURN    : R E T U R N ;
 
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
 INTEGER    : [0-9]+ ;
+BOOLEAN    : [0-1] ;
 
 DECIMAL    : INTEGER '.' INTEGER
            | INTEGER ('e' | 'E') ('+' | '-')? INTEGER
@@ -285,9 +293,8 @@ fragment STRING_CHAR : QUOTE QUOTE  // two consecutive quotes
                      | ~('\'')      // any non-quote character
                      ;
 
-COMMENT : '{' COMMENT_CHARACTER* '}' -> skip ;
+COMMENT : '/*' COMMENT_CHARACTER* '*/' -> skip ;
+SINGLE_COMMENT : '//' ~[\r\n]* -> skip ;
 
-fragment COMMENT_CHARACTER : ~('}')  ;
-
-
-BLUEPRINT : B L U E P R I N T;
+// fragment COMMENT_CHARACTER : ~('}')  ;
+fragment COMMENT_CHARACTER : ~('ä')  ; //todo
