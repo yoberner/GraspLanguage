@@ -103,11 +103,11 @@ statement : compoundStatement
           | emptyStatement
           ;
 
-compoundStatement : BEGIN statementList END ;
+compoundStatement : (DO)? '{' statementList '}' ;
 emptyStatement : ;
      
 statementList       : statement ( ';' statement )* ;
-assignmentStatement : lhs ':=' rhs ;
+assignmentStatement : lhs '=' rhs ;
 
 lhs locals [ Typespec type = null ] 
     : variable ;
@@ -119,7 +119,7 @@ falseStatement : statement ;
 
 caseStatement
     locals [ HashMap<Object, PascalParser.StatementContext> jumpTable = null ]
-    : IF expression caseBranchList (DEFAULT DO statement';')? ;
+    : IF expression caseBranchList (DEFAULT DO statement ';')? ;
     
 caseBranchList   : caseBranch ( ';' caseBranch )* ;
 caseBranch       : IS caseConstantList DO statement | ;
@@ -128,17 +128,11 @@ caseConstantList : caseConstant ( ',' caseConstant )* ;
 caseConstant    locals [ Typespec type = null, Object value = null ]
     : constant ;
 
-repeatStatement : REPEAT statementList UNTIL expression ;
 whileStatement  : WHILE expression IS TRUE KEEP DOING statement ;
 
 forStatement : FOR INDEX variable START AT expression AND WHILE expression
-               DO statement UPDATE assignmentStatement ;
+               KEEP DOING statement UPDATE assignmentStatement ;
 doStatement : DO expression TIMES statement ;
-
-procedureCallStatement : procedureName '(' argumentList? ')' ;
-
-procedureName   locals [ SymTableEntry entry = null ] 
-    : IDENTIFIER ;
 
 argumentList : argument ( ',' argument )* ;
 argument     : expression ;
@@ -190,11 +184,11 @@ functionName        locals [ Typespec type = null, SymTableEntry entry = null ]
 number          : sign? unsignedNumber ;
 unsignedNumber  : integerConstant | decConstant ;
 integerConstant : INTEGER ;
-decConstant     : DEC;
+decConstant     : DECIMAL;
 characterConstant : CHARACTER ;
 stringConstant    : STRING ;
        
-relOp : '=' | '<>' | '<' | '<=' | '>' | '>=' ;
+relOp : '=' | '!=' | '<' | '<=' | '>' | '>=' ;
 addOp : '+' | '-' | OR ;
 mulOp : '*' | '/' | DIV | MOD | AND ;
 
@@ -295,7 +289,7 @@ fragment STRING_CHAR : QUOTE QUOTE  // two consecutive quotes
 
 COMMENT : '{' COMMENT_CHARACTER* '}' -> skip ;
 
-fragment COMMENT_CHARACTER : ~('}') ;
+fragment COMMENT_CHARACTER : ~('}')  ;
 
 
 BLUEPRINT : B L U E P R I N T;

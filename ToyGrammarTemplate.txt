@@ -127,7 +127,7 @@ String
 -----------------------------------------------------------------------
 ID / Assignment
 -----------------------------------------------------------------------
-i like declarations at top of scope b/c it makes it clear what youre dealing with. actually idk
+Var declaration a top of class and function like Pascal, but each is declared like java.
 Java style declaration / definition
 i -> ref //pass by ref 
 final int i = val
