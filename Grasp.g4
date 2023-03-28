@@ -7,7 +7,7 @@ grammar Grasp;
     // import edu.yu.compilers.intermediate.type.Typespec;
 }
 
-program           : programHeader block '.' ;
+program           : programHeader block ;
 programHeader     : PROGRAM programIdentifier programParameters? ';' ; 
 programParameters : '(' IDENTIFIER ( ',' IDENTIFIER )* ')' ;
 
@@ -15,17 +15,17 @@ programIdentifier   locals [ SymTableEntry entry = null ]
     : IDENTIFIER ;
 
 block         : declarations compoundStatement ;
-declarations  : ( constantsPart ';' )? ( typesPart ';' )? 
-                ( variablesPart ';' )? ( routinesPart ';')? ;
+declarations  : ( constantsPart )? ( typesPart )?
+                ( variablesPart )? ( routinesPart)? ;
 
 constantsPart           : FINAL '{' constantDefinitionsList '}' ;
-constantDefinitionsList : constantDefinition ( ';' constantDefinition )* ;
-constantDefinition      : constantIdentifier '=' constant ;
+constantDefinitionsList : constantDefinition ';' ( constantDefinition ';' )* ;
+constantDefinition      : typeSpecification constantIdentifier '=' constant ;
 
 constantIdentifier  locals [ Typespec type = null, SymTableEntry entry = null ]
     : IDENTIFIER ;
 
-constant            locals [ Typespec type = null, Object value = null ]  
+constant            locals [ Typespec type = null, Object value = null ]
     : sign? ( IDENTIFIER | unsignedNumber )
     | characterConstant
     | stringConstant
@@ -34,7 +34,7 @@ constant            locals [ Typespec type = null, Object value = null ]
 sign : '-' | '+' ;
 
 typesPart           : TYPE '{' typeDefinitionsList '}' ;
-typeDefinitionsList : typeDefinition ( ';' typeDefinition )* ;
+typeDefinitionsList : typeDefinition ';' ( typeDefinition ';')* ;
 typeDefinition      : typeIdentifier '=' typeSpecification ;
 
 typeIdentifier      locals [ Typespec type = null, SymTableEntry entry = null ]
@@ -42,34 +42,27 @@ typeIdentifier      locals [ Typespec type = null, SymTableEntry entry = null ]
 
 typeSpecification   locals [ Typespec type = null ]
     : simpleType        # simpleTypespec
-    | arrayType         # arrayTypespec 
+    | arrayType         # arrayTypespec
     | recordType        # recordTypespec
     ;
 
-simpleType          locals [ Typespec type = null ] 
-    : typeIdentifier    # typeIdentifierTypespec 
-    | enumerationType   # enumerationTypespec
-    | subrangeType      # subrangeTypespec
+simpleType          locals [ Typespec type = null ]
+    : typeIdentifier    # typeIdentifierTypespec
     ;
-           
-enumerationType     : '(' enumerationConstant ( ',' enumerationConstant )* ')' ;
-enumerationConstant : constantIdentifier ;
-subrangeType        : constant '..' constant ;
 
 arrayType
-    : ARRAY '[' arrayDimensionList ']' OF typeSpecification ;
-arrayDimensionList : simpleType ( ',' simpleType )* ;
+    : (simpleType | recordType ) ('['']')* ;
 
-recordType          locals [ SymTableEntry entry = null ]   
+recordType          locals [ SymTableEntry entry = null ]
     : BLUEPRINT '{' recordFields ';'? '}' ;
 recordFields : variableDeclarationsList ;
-           
+
 variablesPart            : VAR '{' variableDeclarationsList '}';
-variableDeclarationsList : variableDeclarations ( ';' variableDeclarations )* ;
+variableDeclarationsList : variableDeclarations ';' ( variableDeclarations ';')* ;
 variableDeclarations     : typeSpecification variableIdentifierList;
 variableIdentifierList   : variableIdentifier ( ',' variableIdentifier )* ;
 
-variableIdentifier  locals [ Typespec type = null, SymTableEntry entry = null ] 
+variableIdentifier  locals [ Typespec type = null, SymTableEntry entry = null ]
     : IDENTIFIER ;
 
 routinesPart      : routineDefinition ( ';' routineDefinition)* ;
@@ -80,15 +73,16 @@ routineIdentifier   locals [ Typespec type = null, SymTableEntry entry = null ]
     : IDENTIFIER ;
 
 parameters                : '(' parameterDeclarationsList ')' ;
-parameterDeclarationsList : parameterDeclarations ( ';' parameterDeclarations )* ;
-parameterDeclarations     : VAR? parameterIdentifierList ':' typeIdentifier ;
-parameterIdentifierList   : parameterIdentifier ( ',' parameterIdentifier )* ;
+parameterDeclarationsList : parameterDeclarations ( ',' parameterDeclarations )* ;
+parameterDeclarations     : VAR? typeIdentifier parameterIdentifier ;
+
 
 parameterIdentifier   locals [ Typespec type = null, SymTableEntry entry = null ]
     : IDENTIFIER ;
 
 statement : compoundStatement
           | assignmentStatement
+	    | declareAndAssignStatement
           | ifStatement
           | caseStatement
           | whileStatement
@@ -103,17 +97,18 @@ statement : compoundStatement
 
 compoundStatement : (DO)? '{' statementList '}' ;
 emptyStatement : ;
-     
-statementList       : statement ( ';' statement )* ;
+
+statementList       : statement ';' ( statement ';' )* ;
+declareAndAssignStatement : typeSpecification variableIdentifier '=' rhs ;
 assignmentStatement : lhs '=' rhs ;
 
 returnStatement : RETURN expression ;
 
-lhs locals [ Typespec type = null ] 
+lhs locals [ Typespec type = null ]
     : variable ;
 rhs : expression ;
 
-ifStatement    : IF expression IS TRUE DO trueStatement ( ELSE falseStatement )? ( ELSE JUST DO falseStatement)? ;
+ifStatement    : IF expression IS TRUE DO trueStatement ( ELSE falseStatement )? ;
 trueStatement  : statement ;
 falseStatement : statement ;
 
@@ -189,7 +184,7 @@ characterConstant : CHARACTER ;
 stringConstant    : STRING ;
 booleanConstant   : BOOLEAN ;
        
-relOp : '=' | '!=' | '<' | '<=' | '>' | '>=' ;
+relOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
 addOp : '+' | '-' | OR ;
 mulOp : '*' | '/' | DIV | MOD | AND ;
 

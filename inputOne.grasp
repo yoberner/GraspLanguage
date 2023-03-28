@@ -9,8 +9,6 @@ TYPE {
 		integer id;
 		String name;
 	};
-
-	Array integer numbers = [1, 2, 3, 4, 5];
 }
 
 var {
@@ -19,6 +17,7 @@ var {
 	boolean b;
 	character c;
 	string s;
+	integer[] rankings;
 }
 
 FUNCTION cube(integer x) returns integer {
@@ -34,12 +33,12 @@ DO {
 
 	// test boolean:
 
-	if not b is true {
+	if not b is true do {
 		println('b is false');
 	}
-	else {
+	else do {
 		println('b is true');
-	}
+	};
 
 
 	// test operators:
@@ -47,24 +46,25 @@ DO {
 	k = 1 + 2 * 3;
 	println('k = ', k);
 
-	if (k != 1 or k != 2) is true {
+	if ((k != 1) or (k != 2)) is true do {
 		println('k is not 1');
-	}
+	};
 
 	l = 1;
 	k = 2;
 
-	if ((k == 2) and (l == 1)) is true {
+	if ((k == 2) and (l == 1)) is true do {
 		println('k = 2 and l = 1');
-	}
+	};
 
 	k = 10;
-	if (k > 1 and k < 20) is true {
+	if ((k > 1) and (k < 20)) is true do {
 		println('k is between 1 and 20');
-	}
-	if (k >= 1 and k <= 20) is true {
+	};
+
+	if ((k >= 1) and (k <= 20)) is true do {
 		println('k is between 1 and 20 inclusive');
-	}
+	};
 
 
 	// test constants:
@@ -73,12 +73,12 @@ DO {
 	// test assignment:
 
 	b = 1;
-	if b is true {
+	if b is true do {
 		println('b is true');
 	}
-	else {
+	else do {
 		println('b is false');
-	}
+	};
 
 
 	// test string:
@@ -91,13 +91,13 @@ DO {
 
     i = 1;
     j = 2;
-    
-	if (i = j) is true {
+
+	if (i == j) is true do{
 		x = 3.14;
 	}
-	else {
+	else do {
 		x = -5;
-	}
+	};
 
     println('i = ', i, ', j = ', j, ', x = ', x:5:2, ', y = ', y:5:2);
 
@@ -108,31 +108,30 @@ DO {
 	while (i <= 5) is true keep doing {
 		println('i = ', i);
 		i = i + 1;
-	}
+	};
+
 
 
 	// test for:
 
-	for i = 1 to 5 do println('i = ', i);
-
 	for index i start at 1 and while (i <= 5) keep doing {
 		println('i = ', i);
 	}
-	update i++;
+	UPDATE i = i + 1;;
 
 
 	// test function:
-	println('3 cubed = ', cube(3));
+	//println('3 cubed = ', cube(3));
 
 
 	// test case:
 
-	if (i+1):
-	is 1 do j = i;
-	is -8 do j = 8*i;
-	is 5 or 7 or 4 do j = 574*i;
-	default do j = 0;
+	//if (i+1):
+	//is 1 do j = i;
+	//is -8 do j = 8*i;
+	//is 5 or 7 or 4 do j = 574*i;
+	//default do j = 0;
 
-	println('j = ', j);
+	//println('j = ', j);
 
 }
