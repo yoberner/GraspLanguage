@@ -121,17 +121,17 @@ DO {
 
 
 	// test function:
-	//println('3 cubed = ', cube(3));
+	println('3 cubed = ', cube(3));
 
 
 	// test case:
 
-	//if (i+1):
-	//is 1 do j = i;
-	//is -8 do j = 8*i;
-	//is 5 or 7 or 4 do j = 574*i;
-	//default do j = 0;
+	if (i+1)
+	is 1 do j = i;
+	is -8 do j = 8*i;
+	is 5, 7, 4 do j = 574*i;
+	default do j = 0;;
 
-	//println('j = ', j);
+	println('j = ', j);
 
 }
