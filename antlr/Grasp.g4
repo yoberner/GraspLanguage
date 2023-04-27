@@ -34,7 +34,7 @@ constant            locals [ Typespec type = null, Object value = null ]
 sign : '-' | '+' ;
 
 typesPart           : TYPE '{' typeDefinitionsList '}' ;
-typeDefinitionsList : typeDefinition ';' ( typeDefinition ';')* ;
+typeDefinitionsList : typeDefinition* ;
 typeDefinition      : typeIdentifier '=' typeSpecification ;
 
 typeIdentifier      locals [ Typespec type = null, SymTableEntry entry = null ]
@@ -81,24 +81,24 @@ parameterIdentifier   locals [ Typespec type = null, SymTableEntry entry = null 
     : IDENTIFIER ;
 
 statement : compoundStatement
-          | assignmentStatement
-	    | declareAndAssignStatement
+          | assignmentStatement ';'
+	      | declareAndAssignStatement ';'
           | ifStatement
           | caseStatement
           | whileStatement
           | forStatement
-          | writeStatement
-          | writelnStatement
-          | readStatement
-          | readlnStatement
-          | emptyStatement
-          | returnStatement
+          | printStatement ';'
+          | printlnStatement ';'
+          | readStatement ';'
+          | readlnStatement ';'
+          | emptyStatement ';'
+          | returnStatement ';'
           ;
 
 compoundStatement : (DO)? '{' statementList '}' ;
 emptyStatement : ;
 
-statementList       : statement ';' ( statement ';' )* ;
+statementList       : statement* ;
 declareAndAssignStatement : typeSpecification variableIdentifier '=' rhs ;
 assignmentStatement : lhs '=' rhs ;
 
@@ -114,10 +114,10 @@ falseStatement : statement ;
 
 caseStatement
     locals [ HashMap<Object, PascalParser.StatementContext> jumpTable = null ]
-    : IF expression caseBranchList (DEFAULT DO statement ';')? ;
-    
-caseBranchList   : caseBranch ( ';' caseBranch )* ;
-caseBranch       : IS caseConstantList DO statement | ;
+    : IF expression caseBranchList (DEFAULT DO statement)? ;
+
+caseBranchList   : caseBranch* ;
+caseBranch       : IS caseConstantList DO statement ;
 caseConstantList : caseConstant ( ',' caseConstant )* ;
 
 caseConstant    locals [ Typespec type = null, Object value = null ]
@@ -132,8 +132,8 @@ doStatement : DO expression TIMES statement ;
 argumentList : argument ( ',' argument )* ;
 argument     : expression ;
 
-writeStatement   : PRINT writeArguments ;
-writelnStatement : PRINTLN writeArguments? ;
+printStatement   : PRINT writeArguments ;
+printlnStatement : PRINTLN writeArguments? ;
 writeArguments   : '(' writeArgument (',' writeArgument)* ')' ;
 writeArgument    : expression (':' fieldWidth)? ;
 fieldWidth       : sign? integerConstant (':' decimalPlaces)? ;
@@ -265,7 +265,7 @@ BLUEPRINT : B L U E P R I N T ;
 RETURNS    : R E T U R N S ;
 RETURN    : R E T U R N ;
 
-IDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;
+IDENTIFIER : [a-zA-Z][a-zA-Z0-9]*;
 INTEGER    : [0-9]+ ;
 BOOLEAN    : [0-1] ;
 
@@ -292,4 +292,4 @@ COMMENT : '/*' COMMENT_CHARACTER* '*/' -> skip ;
 SINGLE_COMMENT : '//' ~[\r\n]* -> skip ;
 
 // fragment COMMENT_CHARACTER : ~('}')  ;
-fragment COMMENT_CHARACTER : ~('ä')  ; //todo
+fragment COMMENT_CHARACTER : ~('@')  ; //todo

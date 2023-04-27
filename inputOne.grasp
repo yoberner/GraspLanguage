@@ -8,7 +8,7 @@ TYPE {
 	Person = blueprint {
 		integer id;
 		String name;
-	};
+	}
 }
 
 var {
@@ -38,7 +38,7 @@ DO {
 	}
 	else do {
 		println('b is true');
-	};
+	}
 
 
 	// test operators:
@@ -48,23 +48,23 @@ DO {
 
 	if ((k != 1) or (k != 2)) is true do {
 		println('k is not 1');
-	};
+	}
 
 	l = 1;
 	k = 2;
 
 	if ((k == 2) and (l == 1)) is true do {
 		println('k = 2 and l = 1');
-	};
+	}
 
 	k = 10;
 	if ((k > 1) and (k < 20)) is true do {
 		println('k is between 1 and 20');
-	};
+	}
 
 	if ((k >= 1) and (k <= 20)) is true do {
 		println('k is between 1 and 20 inclusive');
-	};
+	}
 
 
 	// test constants:
@@ -78,7 +78,7 @@ DO {
 	}
 	else do {
 		println('b is false');
-	};
+	}
 
 
 	// test string:
@@ -97,7 +97,7 @@ DO {
 	}
 	else do {
 		x = -5;
-	};
+	}
 
     println('i = ', i, ', j = ', j, ', x = ', x:5:2, ', y = ', y:5:2);
 
@@ -108,7 +108,7 @@ DO {
 	while (i <= 5) is true keep doing {
 		println('i = ', i);
 		i = i + 1;
-	};
+	}
 
 
 
@@ -117,7 +117,7 @@ DO {
 	for index i start at 1 and while (i <= 5) keep doing {
 		println('i = ', i);
 	}
-	UPDATE i = i + 1;;
+	UPDATE i = i + 1;
 
 
 	// test function:
@@ -130,7 +130,7 @@ DO {
 	is 1 do j = i;
 	is -8 do j = 8*i;
 	is 5, 7, 4 do j = 574*i;
-	default do j = 0;;
+	default do j = 0;
 
 	println('j = ', j);
 
