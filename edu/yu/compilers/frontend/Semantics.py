@@ -1,46 +1,43 @@
-/**
- * Semantic operations.
- * Perform type checking and create symbol tables.
- */
-
-package edu.yu.compilers.frontend;
-
-import antlr4.PascalBaseVisitor;
-import antlr4.PascalParser;
-import edu.yu.compilers.intermediate.symtable.Predefined;
-import edu.yu.compilers.intermediate.symtable.SymTable;
-import edu.yu.compilers.intermediate.symtable.SymTableEntry;
-import edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind;
-import edu.yu.compilers.intermediate.symtable.SymTableStack;
-import edu.yu.compilers.intermediate.type.TypeChecker;
-import edu.yu.compilers.intermediate.type.Typespec;
-import edu.yu.compilers.intermediate.type.Typespec.Form;
-import edu.yu.compilers.intermediate.util.BackendMode;
-import edu.yu.compilers.intermediate.util.CrossReferencer;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-
-import static edu.yu.compilers.frontend.SemanticErrorHandler.Code.*;
-import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*;
-import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Routine.DECLARED;
-import static edu.yu.compilers.intermediate.type.Typespec.Form.*;
-import static edu.yu.compilers.intermediate.util.BackendMode.EXECUTOR;
+#
+#  Semantic operations.
+#  Perform type checking and create symbol tables.
+#
+from GraspVisitor import GraspVisitor
 
 
-public class Semantics extends PascalBaseVisitor<Object> {
-    private final BackendMode mode;
-    private final SymTableStack symTableStack;
-    private final SemanticErrorHandler error;
-    private SymTableEntry programId;
+# import antlr4.PascalBaseVisitor;
+# import antlr4.PascalParser;
+# import edu.yu.compilers.intermediate.symtable.Predefined;
+# import edu.yu.compilers.intermediate.symtable.SymTable;
+# import edu.yu.compilers.intermediate.symtable.SymTableEntry;
+# import edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind;
+# import edu.yu.compilers.intermediate.symtable.SymTableStack;
+# import edu.yu.compilers.intermediate.type.TypeChecker;
+# import edu.yu.compilers.intermediate.type.Typespec;
+# import edu.yu.compilers.intermediate.type.Typespec.Form;
+# import edu.yu.compilers.intermediate.util.BackendMode;
+# import edu.yu.compilers.intermediate.util.CrossReferencer;
+#
+# import java.util.ArrayList;
+# import java.util.HashSet;
+#
+# import static edu.yu.compilers.frontend.SemanticErrorHandler.Code.*;
+# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*;
+# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Routine.DECLARED;
+# import static edu.yu.compilers.intermediate.type.Typespec.Form.*;
+# import static edu.yu.compilers.intermediate.util.BackendMode.EXECUTOR;
 
-    public Semantics(BackendMode mode) {
-        // Create and initialize the symbol table stack.
-        this.symTableStack = new SymTableStack();
+
+class Semantics(GraspVisitor) :
+
+
+    def __init__(self, mode):
+        # Create and initialize the symbol table stack.
+        self.symTableStack = new SymTableStack();
         Predefined.initialize(symTableStack);
 
-        this.mode = mode;
-        this.error = new SemanticErrorHandler();
+        self.mode = mode
+        self.error = SemanticErrorHandler()
     }
 
     /**
