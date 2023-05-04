@@ -1,5 +1,6 @@
 from multipledispatch import dispatch
 from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
+from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 
 
 class SymTableStack(list):
@@ -8,22 +9,25 @@ class SymTableStack(list):
     def __init__(self):
         super().__init__()
         self.currentNestingLevel = 0
-        super().append(SymTable(self.currentNestingLevel))
+        # change all below super() to self if doesnt work
+        super().append(SymTable(self.currentNestingLevel))  # ChatGPT used self instead of super()
         self.programId = None
 
-    def getCurrentNestingLevel(self):
+    def getCurrentNestingLevel(self) -> int:  # chatGPT used - > <ret type> :
         return self.currentNestingLevel
 
     def getProgramId(self):
         return self.programId
 
-    def setProgramId(self, id):
-        self.programId = id
+    def setProgramId(self, _id: SymTableEntry):
+        self.programId = _id
 
     def getLocalSymTable(self):
-        return super.pop(self.currentNestingLevel)
+        return super()[self.currentNestingLevel]
 
-    @dispatch()
+    # ChatGPT Did not seem to properly override the methods in Python
+
+    @dispatch()  # Not sure if this will work
     def push(self):
         self.currentNestingLevel += 1
         symTable = SymTable(self.currentNestingLevel)
@@ -38,25 +42,34 @@ class SymTableStack(list):
         return symTable
 
     def _pop(self):
-        symTable = super().pop(self.currentNestingLevel)
+        symTable = super()[self.currentNestingLevel]
         self.currentNestingLevel -= 1
         super().remove(self.currentNestingLevel)
+        # We differ slightly but may be functionally identical - I remove by index
+        # ChatGPT simply pops - but I think same effect is achieved.
 
         return symTable
 
     def enterLocal(self, name, kind):
-        return super().pop(self.currentNestingLevel).enter(name, kind)  # This is correct
+        return super()[self.currentNestingLevel].enter(name, kind)  # This is correct
 
     def lookupLocal(self, name):
-        return super().pop(self.currentNestingLevel).lookup(name)  # This is correct
+        return super()[self.currentNestingLevel].lookup(name)  # This is correct
 
     def lookup(self, name):
         foundEntry = None
 
         # Search the current and enclosing scopes.
         i = self.currentNestingLevel
-        while ((i >= 0) and (foundEntry == None)):
-            foundEntry = super().pop(i).lookup(name)
+        while (i >= 0) and (foundEntry == None):
+            foundEntry = super()[i].lookup(name)
             i += 1
+            # it also added a break statement
+
+        # ChatGPT's loop - very nice
+        # for i in range(self.currentNestingLevel, -1, -1):
+        #     foundEntry = self[i].lookup(name)
+        #     if foundEntry:
+        #         break
 
         return foundEntry

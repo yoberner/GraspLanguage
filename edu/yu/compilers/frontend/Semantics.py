@@ -3,6 +3,10 @@
 #  Perform type checking and create symbol tables.
 #
 from GraspVisitor import GraspVisitor
+from edu.yu.compilers.frontend.SemanticErrorHandler import SemanticErrorHandler
+from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
+from edu.yu.compilers.intermediate.symtable.SymTableStack import SymTableStack
+from edu.yu.compilers.intermediate.type.Typespec import Typespec
 
 
 # import antlr4.PascalBaseVisitor;
@@ -38,16 +42,16 @@ class Semantics(GraspVisitor) :
 
         self.mode = mode
         self.error = SemanticErrorHandler()
-    }
 
-    /**
-     * Return the default value for a data type.
-     *
-     * @param type the data type.
-     * @return the default value.
-     */
-    public static Object defaultValue(Typespec type) {
-        type = type.baseType();
+
+    # Return the default value for a data type.
+    #
+    # @param type the data type.
+    # @return the default value.
+
+    @staticmethod
+    def defaultValue(type: Typespec) :
+        type = type.baseType()
 
         if (type == Predefined.integerType) return 0;
         else if (type == Predefined.realType) return 0.0f;
