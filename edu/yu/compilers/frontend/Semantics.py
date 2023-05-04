@@ -33,8 +33,8 @@ class Semantics(GraspVisitor) :
 
     def __init__(self, mode):
         # Create and initialize the symbol table stack.
-        self.symTableStack = new SymTableStack();
-        Predefined.initialize(symTableStack);
+        self.symTableStack = SymTableStack()
+        Predefined.initialize(self.symTableStack)
 
         self.mode = mode
         self.error = SemanticErrorHandler()
