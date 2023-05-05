@@ -1,5 +1,5 @@
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
-
+from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 
 # <h1>Predefined</h1>
 # <p>Enter the predefined Pascal types, identifiers, and constants

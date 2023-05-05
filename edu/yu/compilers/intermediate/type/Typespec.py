@@ -1,327 +1,226 @@
-/**
- * <h1>Typespec</h1>
- * <p>The type specification object for various datatypes.</p>
- * <p>Adapted from:</p>
- * <p>Copyright (c) 2020 by Ronald Mak</p>
- * <p>For instructional purposes only.  No warranties.</p>
- */
-
-package edu.yu.compilers.intermediate.type;
+from enum import Enum
 
 
-import edu.yu.compilers.intermediate.symtable.SymTable;
-import edu.yu.compilers.intermediate.symtable.SymTableEntry;
+# /**
+#  * <h1>Typespec</h1>
+#  * <p>The type specification object for various datatypes.</p>
+#  * <p>Adapted from:</p>
+#  * <p>Copyright (c) 2020 by Ronald Mak</p>
+#  * <p>For instructional purposes only.  No warranties.</p>
+#  */
 
-import java.util.ArrayList;
+class Typespec:
 
-public class Typespec {
-    private final Form form;               // type form
-    private SymTableEntry identifier;  // type identifier
-    private TypeInfo info;           // type information
+    def __init__(self, form):
+        self.form = form
+        self.identifier = None
 
-    /**
-     * Constructor.
-     *
-     * @param form the type form.
-     */
-    public Typespec(Form form) {
-        this.form = form;
-        this.identifier = null;
+        # Initialize the appropriate type information.
+        if self.form == self.Form.ENUMERATION:
+            self.info = EnumerationInfo()
+            self.info.constants = []
+        elif self.form == self.Form.SUBRANGE:
+            self.info = SubrangeInfo()
+            self.info.minValue = 0
+            self.info.maxValue = 0
+            self.info.baseType = None
+        elif self.form == self.Form.ARRAY:
+            self.info = ArrayInfo()
+            self.info.indexType = None
+            self.info.elementType = None
+            self.info.elementCount = 0
+        elif self.form == self.Form.RECORD:
+            self.info = RecordInfo()
+            self.info.typePath = None
+            self.info.symTable = None
+        else:
+            self.info = None
 
-        // Initialize the appropriate type information.
-        switch (form) {
-            case ENUMERATION -> {
-                info = new EnumerationInfo();
-                ((EnumerationInfo) info).constants = new ArrayList<>();
-            }
-            case SUBRANGE -> {
-                info = new SubrangeInfo();
-                ((SubrangeInfo) info).minValue = 0;
-                ((SubrangeInfo) info).maxValue = 0;
-                ((SubrangeInfo) info).baseType = null;
-            }
-            case ARRAY -> {
-                info = new ArrayInfo();
-                ((ArrayInfo) info).indexType = null;
-                ((ArrayInfo) info).elementType = null;
-                ((ArrayInfo) info).elementCount = 0;
-            }
-            case RECORD -> {
-                info = new RecordInfo();
-                ((RecordInfo) info).typePath = null;
-                ((RecordInfo) info).symTable = null;
-            }
-            default -> {
-            }
-        }
-    }
+    # Determine whether the type is structured (array or record).
+    # @return true if structured, false if not.
 
-    /**
-     * Determine whether the type is structured (array or record).
-     *
-     * @return true if structured, false if not.
-     */
-    public boolean isStructured() {
-        return (form == Form.ARRAY) || (form == Form.RECORD);
-    }
+    def isStructured(self):
+        return (self.form == self.Form.ARRAY) or (self.form == self.Form.RECORD)
 
-    /**
-     * Get the type form.
-     *
-     * @return the form.
-     */
-    public Form getForm() {
-        return form;
-    }
+    # Get the type form.
+    # @return the form.
 
-    /**
-     * Get the type identifier.
-     *
-     * @return the identifier's symbol table entry.
-     */
-    public SymTableEntry getIdentifier() {
-        return identifier;
-    }
+    def getForm(self):
+        return self.form
 
-    /**
-     * Setter.
-     *
-     * @param identifier the type identifier (symbol table entry).
-     */
-    public void setIdentifier(SymTableEntry identifier) {
-        this.identifier = identifier;
-    }
+    # Get the type identifier.
+    # @return the identifier's symbol table entry.
 
-    /**
-     * Get the base type of this type.
-     *
-     * @return the base type.
-     */
-    public Typespec baseType() {
-        return form == Form.SUBRANGE ? ((SubrangeInfo) info).baseType : this;
-    }
+    def getIdentifier(self):
+        return self.identifier
 
-    /**
-     * Get the subrange base type.
-     *
-     * @return the base type.
-     */
-    public Typespec getSubrangeBaseType() {
-        return ((SubrangeInfo) info).baseType;
-    }
+    # Setter.
+    # @param identifier the type identifier (symbol table entry).
 
-    /**
-     * Set the subrange base type.
-     *
-     * @param baseType the base type to set.
-     */
-    public void setSubrangeBaseType(Typespec baseType) {
-        ((SubrangeInfo) info).baseType = baseType;
-    }
+    def setIdentifier(self, identifier):
+        self.identifier = identifier
 
-    /**
-     * Get the subrange minimum value.
-     *
-     * @return the value.
-     */
-    public int getSubrangeMinValue() {
-        return ((SubrangeInfo) info).minValue;
-    }
+    # Get the base type of this type.
+    # @return the base type.
 
-    /**
-     * Set the subrange minimum value.
-     *
-     * @param minValue the value to set.
-     */
-    public void setSubrangeMinValue(int minValue) {
-        ((SubrangeInfo) info).minValue = minValue;
-    }
+    def baseType(self):
+        if self.form == self.Form.SUBRANGE:
+            return self.info.baseType
+        else:
+            return self
 
-    /**
-     * Get the subrange maximum value.
-     *
-     * @return the value.
-     */
-    public int getSubrangeMaxValue() {
-        return ((SubrangeInfo) info).maxValue;
-    }
+        # return self.info.baseType if self.form == Form.self.Form.SUBRANGE else self
 
-    /**
-     * Set the subrange maximum value.
-     *
-     * @param maxValue the value to set.
-     */
-    public void setSubrangeMaxValue(int maxValue) {
-        ((SubrangeInfo) info).maxValue = maxValue;
-    }
+        # return form == Form.self.Form.SUBRANGE ? self.info.baseType : this
 
-    /**
-     * Get the arraylist of symbol table entries of enumeration constants.
-     *
-     * @return the arraylist.
-     */
-    public ArrayList<SymTableEntry> getEnumerationConstants() {
-        return ((EnumerationInfo) info).constants;
-    }
+    # Get the subrange base type.
+    # @return the base type.
 
-    /**
-     * Set the vector of enumeration constants symbol table entries.
-     *
-     * @param constants the vector to set.
-     */
-    public void setEnumerationConstants(ArrayList<SymTableEntry> constants) {
-        ((EnumerationInfo) info).constants = constants;
-    }
+    def getSubrangeBaseType(self):
+        return self.info.baseType
 
-    /**
-     * Get the array index data type.
-     *
-     * @return the data type.
-     */
-    public Typespec getArrayIndexType() {
-        return ((ArrayInfo) info).indexType;
-    }
+    # Set the subrange base type.
+    # @param baseType the base type to set.
 
-    /**
-     * Set the array index data type.
-     *
-     * @param indexType the data type to set.
-     */
-    public void setArrayIndexType(Typespec indexType) {
-        ((ArrayInfo) info).indexType = indexType;
-    }
+    def setSubrangeBaseType(self, baseType):
+        self.info.baseType = baseType
 
-    /**
-     * Get the array element data type.
-     *
-     * @return the data type.
-     */
-    public Typespec getArrayElementType() {
-        return ((ArrayInfo) info).elementType;
-    }
+    # Get the subrange minimum value.
+    # @return the value.
 
-    /**
-     * Set the array element data type.
-     *
-     * @param elementType the data type to set.
-     */
-    public void setArrayElementType(Typespec elementType) {
-        ((ArrayInfo) info).elementType = elementType;
-    }
+    def getSubrangeMinValue(self):
+        return self.info.minValue
 
-    /**
-     * Get the array element count.
-     *
-     * @return the count.
-     */
-    public int getArrayElementCount() {
-        return ((ArrayInfo) info).elementCount;
-    }
+    # Set the subrange minimum value.
+    # @param minValue the value to set.
 
-    /**
-     * Set the array element count.
-     *
-     * @param elementCount the count to set.
-     */
-    public void setArrayElementCount(int elementCount) {
-        ((ArrayInfo) info).elementCount = elementCount;
-    }
+    def setSubrangeMinValue(self, minValue):
+        self.info.minValue = minValue
 
-    /**
-     * Get the base type of array.
-     *
-     * @return the base type of its final dimension.
-     */
-    public Typespec getArrayBaseType() {
-        Typespec elemType = this;
+    # Get the subrange maximum value.
+    # @return the value.
 
-        while (elemType.form == Form.ARRAY) {
-            elemType = elemType.getArrayElementType();
-        }
+    def getSubrangeMaxValue(self):
+        return self.info.maxValue
 
-        return elemType.baseType();
-    }
+    # Set the subrange maximum value.
+    # @param maxValue the value to set.
 
-    /**
-     * Get the record's symbol table.
-     *
-     * @return the symbol table.
-     */
-    public SymTable getRecordSymTable() {
-        return ((RecordInfo) info).symTable;
-    }
+    def setSubrangeMaxValue(self, maxValue):
+        self.info.maxValue = maxValue
 
-    /**
-     * Set the record's symbol table.
-     *
-     * @param symTable the symbol table to set.
-     */
-    public void setRecordSymTable(SymTable symTable) {
-        ((RecordInfo) info).symTable = symTable;
-    }
+    # Get the arraylist of symbol table entries of enumeration constants.
+    # @return the arraylist.
 
-    /**
-     * Get a record type's fully qualified type path.
-     *
-     * @return the path.
-     */
-    public String getRecordTypePath() {
-        return ((RecordInfo) info).typePath;
-    }
+    def getEnumerationConstants(self):
+        return self.info.constants
 
-    /**
-     * Set a record type's fully qualified type path.
-     *
-     * @param typePath the path to set.
-     */
-    public void setRecordTypePath(String typePath) {
-        ((RecordInfo) info).typePath = typePath;
-    }
+    # Set the vector of enumeration constants symbol table entries.
+    # @param constants the vector to set.
 
-    public enum Form {
-        SCALAR, ENUMERATION, SUBRANGE, ARRAY, RECORD, UNKNOWN;
+    def setEnumerationConstants(self, constants):
+        self.info.constants = constants
 
-        public String toString() {
-            return super.toString().toLowerCase();
-        }
-    }
+    # Get the array index data type.
+    # @return the data type.
 
-    /**
-     * Type information interface.
-     */
-    private interface TypeInfo {
-    }
+    def getArrayIndexType(self):
+        return self.info.indexType
 
-    /**
-     * Enumeration type information.
-     */
-    private static class EnumerationInfo implements TypeInfo {
-        private ArrayList<SymTableEntry> constants;
-    }
+    # Set the array index data type.
+    # @param indexType the data type to set.
 
-    /**
-     * Subrange type information.
-     */
-    private static class SubrangeInfo implements TypeInfo {
-        private Typespec baseType;
-        private int minValue;
-        private int maxValue;
-    }
+    def setArrayIndexType(self, indexType):
+        self.info.indexType = indexType
 
-    /**
-     * Array type information.
-     */
-    private static class ArrayInfo implements TypeInfo {
-        private Typespec indexType;
-        private Typespec elementType;
-        private int elementCount;
-    }
+    # Get the array element data type.
+    # @return the data type.
 
-    /**
-     * Record type information.
-     */
-    private static class RecordInfo implements TypeInfo {
-        String typePath;
-        private SymTable symTable;
-    }
-}
+    def getArrayElementType(self):
+        return self.info.elementType
+
+    # Set the array element data type.
+    # @param elementType the data type to set.
+
+    def setArrayElementType(self, elementType):
+        self.info.elementType = elementType
+
+    # Get the array element count.
+    # @return the count.
+
+    def getArrayElementCount(self):
+        return self.info.elementCount
+
+    # Set the array element count.
+    # @param elementCount the count to set.
+
+    def setArrayElementCount(self, elementCount):
+        self.info.elementCount = elementCount
+
+    # Get the base type of array.
+    # @return the base type of its final dimension.
+
+    def getArrayBaseType(self):
+        elemType = self
+
+        while elemType.form == self.self.Form.ARRAY:
+            elemType = elemType.getArrayElementType()
+
+        return elemType.baseType()
+
+    # Get the record's symbol table.
+    # @return the symbol table.
+    def getRecordSymTable(self):
+        return self.info.symTable
+
+    # Set the record's symbol table.
+    # @param symTable the symbol table to set.
+    def setRecordSymTable(self, symTable):
+        self.info.symTable = symTable
+
+    # Get a record type's fully qualified type path.
+    # @return the path.
+    def getRecordTypePath(self):
+        return self.info.typePath
+
+    # Set a record type's fully qualified type path.
+    # @param typePath the path to set.
+    def setRecordTypePath(self, typePath):
+        self.info.typePath = typePath
+
+    class Form(Enum):
+        SCALAR = 1
+        ENUMERATION = 2
+        SUBRANGE = 3
+        ARRAY = 4
+        RECORD = 5
+        UNKNOWN = 6
+
+        def __str__(self):
+            return self.name.lower()
+
+
+
+class TypeInfo:
+    pass
+
+class EnumerationInfo(TypeInfo):
+    def __init__(self):
+        self.constants = []
+
+class SubrangeInfo(TypeInfo):
+    def __init__(self):
+        self.baseType = None
+        self.minValue = 0
+        self.maxValue = 0
+
+class ArrayInfo(TypeInfo):
+    def __init__(self):
+        self.indexType = None
+        self.elementType = None
+        self.elementCount = 0
+
+class RecordInfo(TypeInfo):
+    def __init__(self):
+        self.typePath = ""
+        self.symTable = None
