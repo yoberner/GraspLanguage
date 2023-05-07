@@ -71,7 +71,7 @@ class Semantics(GraspVisitor) :
     public void printSymbolTableStack() {
         // Print the cross-reference table.
         CrossReferencer crossReferencer = new CrossReferencer();
-        crossReferencer.print(symTableStack);
+        crossReferencer._print(symTableStack);
     }
 
     @Override
