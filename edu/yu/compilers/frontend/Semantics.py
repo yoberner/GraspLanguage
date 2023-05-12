@@ -1071,154 +1071,115 @@ class Semantics(GraspVisitor):
     #     return null;
     # }
 
-    # @Override
-    # public Object visitVariableFactor(PascalParser.VariableFactorContext ctx) {
-    #     PascalParser.VariableContext varCtx = ctx.variable();
-    #     visit(varCtx);
-    #     ctx.type = varCtx.type;
+    def visitVariableFactor(self, ctx):
+        varCtx = ctx.variable()
+        self.visit(varCtx)
+        ctx.type = varCtx.type
 
-    #     return null;
-    # }
+        return None
 
-    # @Override
-    # public Object visitVariable(PascalParser.VariableContext ctx) {
-    #     PascalParser.VariableIdentifierContext varIdCtx = ctx.variableIdentifier();
+    def visitVariable(self, ctx):
+        varIdCtx = ctx.variableIdentifier()
 
-    #     visit(varIdCtx);
-    #     ctx.entry = varIdCtx.entry;
-    #     ctx.type = variableDatatype(ctx, varIdCtx.type);
+        self.visit(varIdCtx)
+        ctx.entry = varIdCtx.entry
+        ctx.type = self.variableDatatype(ctx, varIdCtx.type)
 
-    #     return null;
-    # }
+        return None
 
-    # @Override
-    # public Object visitVariableIdentifier(PascalParser.VariableIdentifierContext ctx) {
-    #     String variableName = ctx.IDENTIFIER().getText().toLowerCase();
-    #     SymTableEntry variableId = symTableStack.lookup(variableName);
+    def visitVariableIdentifier(self, ctx):
+        variableName = ctx.IDENTIFIER().getText().lower()
+        variableId = symTableStack.lookup(variableName)
 
-    #     if (variableId != null) {
-    #         int lineNumber = ctx.getStart().getLine();
-    #         ctx.type = variableId.getType();
-    #         ctx.entry = variableId;
-    #         variableId.appendLineNumber(lineNumber);
+        if variableId is not None:
+            lineNumber = ctx.start.line
+            ctx.type = variableId.getType()
+            ctx.entry = variableId
+            variableId.appendLineNumber(lineNumber)
 
-    #         Kind kind = variableId.getKind();
-    #         switch (kind) {
-    #             case TYPE, PROGRAM, PROGRAM_PARAMETER, PROCEDURE, UNDEFINED -> error.flag(INVALID_VARIABLE, ctx);
-    #             default -> {
-    #             }
-    #         }
-    #     } else {
-    #         error.flag(UNDECLARED_IDENTIFIER, ctx);
-    #         ctx.type = Predefined.integerType;
-    #     }
+            kind = variableId.getKind()
+            if kind in [Kind.TYPE, Kind.PROGRAM, Kind.PROGRAM_PARAMETER, Kind.PROCEDURE, Kind.UNDEFINED]:
+                error.flag(INVALID_VARIABLE, ctx)
+        else:
+            error.flag(UNDECLARED_IDENTIFIER, ctx)
+            ctx.type = Predefined.integerType
 
-    #     return null;
-    # }
+        return None
 
-    # /**
-    #  * Determine the datatype of a variable that can have modifiers.
-    #  *
-    #  * @param varCtx  the VariableContext.
-    # #  * @param varType the variable's datatype without the modifiers.
-    #  * @return the datatype with any modifiers.
-    #  */
-    # private Typespec variableDatatype(PascalParser.VariableContext varCtx, Typespec varType) {
-    #     Typespec type = varType;
+    def variableDatatype(varCtx, varType):
+        type = varType
+        
+        # Loop over the modifiers.
+        for modCtx in varCtx.modifier():
+            # Subscripts.
+            if modCtx.indexList() is not None:
+                indexListCtx = modCtx.indexList()
 
-    #     // Loop over the modifiers.
-    #     for (PascalParser.ModifierContext modCtx : varCtx.modifier()) {
-    #         // Subscripts.
-    #         if (modCtx.indexList() != null) {
-    #             PascalParser.IndexListContext indexListCtx = modCtx.indexList();
+                # Loop over the subscripts.
+                for indexCtx in indexListCtx.index():
+                    if type.getForm() == ARRAY:
+                        indexType = type.getArrayIndexType()
+                        exprCtx = indexCtx.expression()
+                        visit(exprCtx)
 
-    #             // Loop over the subscripts.
-    #             for (PascalParser.IndexContext indexCtx : indexListCtx.index()) {
-    #                 if (type.getForm() == ARRAY) {
-    #                     Typespec indexType = type.getArrayIndexType();
-    #                     PascalParser.ExpressionContext exprCtx = indexCtx.expression();
-    #                     visit(exprCtx);
+                        if indexType.baseType() != exprCtx.type.baseType():
+                            error.flag(TYPE_MISMATCH, exprCtx)
 
-    #                     if (indexType.baseType() != exprCtx.type.baseType()) {
-    #                         error.flag(TYPE_MISMATCH, exprCtx);
-    #                     }
+                        # Datatype of the next dimension.
+                        type = type.getArrayElementType()
+                    else:
+                        error.flag(TOO_MANY_SUBSCRIPTS, indexCtx)
+            else:  # Record field.
+                if type.getForm() == RECORD:
+                    symTable = type.getRecordSymTable()
+                    fieldCtx = modCtx.field()
+                    fieldName = fieldCtx.IDENTIFIER().getText().lower()
+                    fieldId = symTable.lookup(fieldName)
 
-    #                     // Datatype of the next dimension.
-    #                     type = type.getArrayElementType();
-    #                 } else {
-    #                     error.flag(TOO_MANY_SUBSCRIPTS, indexCtx);
-    #                 }
-    #             }
-    #         } else  // Record field.
-    #         {
-    #             if (type.getForm() == RECORD) {
-    #                 SymTable symTable = type.getRecordSymTable();
-    #                 PascalParser.FieldContext fieldCtx = modCtx.field();
-    #                 String fieldName = fieldCtx.IDENTIFIER().getText().toLowerCase();
-    #                 SymTableEntry fieldId = symTable.lookup(fieldName);
+                    # Field of the record type?
+                    if fieldId is not None:
+                        type = fieldId.getType()
+                        fieldCtx.entry = fieldId
+                        fieldCtx.type = type
+                        fieldId.appendLineNumber(modCtx.getStart().getLine())
+                    else:
+                        error.flag(INVALID_FIELD, modCtx)
 
-    #                 // Field of the record type?
-    #                 if (fieldId != null) {
-    #                     type = fieldId.getType();
-    #                     fieldCtx.entry = fieldId;
-    #                     fieldCtx.type = type;
-    #                     fieldId.appendLineNumber(modCtx.getStart().getLine());
-    #                 } else {
-    #                     error.flag(INVALID_FIELD, modCtx);
-    #                 }
-    #             }
+                # Not a record variable.
+                else:
+                    error.flag(INVALID_FIELD, modCtx)
 
-    #             // Not a record variable.
-    #             else {
-    #                 error.flag(INVALID_FIELD, modCtx);
-    #             }
-    #         }
-    #     }
+        return type
 
-    #     return type;
-    # }
+    def visitNumberFactor(self, ctx):
+        numberCtx = ctx.number()
+        unsignedCtx = numberCtx.unsignedNumber()
+        integerCtx = unsignedCtx.integerConstant()
 
-    # @Override
-    # public Object visitNumberFactor(PascalParser.NumberFactorContext ctx) {
-    #     PascalParser.NumberContext numberCtx = ctx.number();
-    #     PascalParser.UnsignedNumberContext unsignedCtx = numberCtx.unsignedNumber();
-    #     PascalParser.IntegerConstantContext integerCtx = unsignedCtx.integerConstant();
+        ctx.type = Predefined.integerType if integerCtx is not None else Predefined.realType
 
-    #     ctx.type = (integerCtx != null) ? Predefined.integerType : Predefined.realType;
+        return None
 
-    #     return null;
-    # }
+    def visitCharacterFactor(self, ctx):
+        ctx.type = Predefined.charType
+        return None
 
-    # @Override
-    # public Object visitCharacterFactor(PascalParser.CharacterFactorContext ctx) {
-    #     ctx.type = Predefined.charType;
-    #     return null;
-    # }
+    def visitStringFactor(self, ctx):
+        ctx.type = Predefined.stringType
+        return None
 
-    # @Override
-    # public Object visitStringFactor(PascalParser.StringFactorContext ctx) {
-    #     ctx.type = Predefined.stringType;
-    #     return null;
-    # }
+    def visitNotFactor(self, ctx):
+        factorCtx = ctx.factor()
+        self.visit(factorCtx)
+        
+        if factor.type != Predefined.booleanType:
+            error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx)
+        
+        ctx.type = Predefined.booleanType
+        return None
 
-    # @Override
-    # public Object visitNotFactor(PascalParser.NotFactorContext ctx) {
-    #     PascalParser.FactorContext factorCtx = ctx.factor();
-    #     visit(factorCtx);
-
-    #     if (factorCtx.type != Predefined.booleanType) {
-    #         error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx);
-    #     }
-
-    #     ctx.type = Predefined.booleanType;
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitParenthesizedFactor(PascalParser.ParenthesizedFactorContext ctx) {
-    #     PascalParser.ExpressionContext exprCtx = ctx.expression();
-    #     visit(exprCtx);
-    #     ctx.type = exprCtx.type;
-
-    #     return null;
-    # }
+    def visitParenthesizedFactor(self, ctx):
+        exprCtx = ctx.expression()
+        self.visit(exprCtx)
+        ctx.type = exprCtx.type
+        return None
