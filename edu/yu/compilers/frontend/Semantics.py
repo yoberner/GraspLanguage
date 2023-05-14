@@ -2,34 +2,37 @@
 #  Semantic operations.
 #  Perform type checking and create symbol tables.
 #
+from GraspParser import GraspParser
 from GraspVisitor import GraspVisitor
 from edu.yu.compilers.frontend.SemanticErrorHandler import SemanticErrorHandler
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
+from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
 from edu.yu.compilers.intermediate.symtable.SymTableStack import SymTableStack
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
+from edu.yu.compilers.intermediate.util.CrossReferencer import CrossReferencer
 
 
-# import antlr4.PascalBaseVisitor;
-# import antlr4.PascalParser;
-# import edu.yu.compilers.intermediate.symtable.Predefined;
-# import edu.yu.compilers.intermediate.symtable.SymTable;
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry;
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind;
-# import edu.yu.compilers.intermediate.symtable.SymTableStack;
-# import edu.yu.compilers.intermediate.type.TypeChecker;
-# import edu.yu.compilers.intermediate.type.Typespec;
-# import edu.yu.compilers.intermediate.type.Typespec.Form;
-# import edu.yu.compilers.intermediate.util.BackendMode;
-# import edu.yu.compilers.intermediate.util.CrossReferencer;
+# import antlr4.PascalBaseVisitor
+# import antlr4.PascalParser
+# import edu.yu.compilers.intermediate.symtable.Predefined
+# import edu.yu.compilers.intermediate.symtable.SymTable
+# import edu.yu.compilers.intermediate.symtable.SymTableEntry
+# import edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind
+# import edu.yu.compilers.intermediate.symtable.SymTableStack
+# import edu.yu.compilers.intermediate.type.TypeChecker
+# import edu.yu.compilers.intermediate.type.Typespec
+# import edu.yu.compilers.intermediate.type.Typespec.Form
+# import edu.yu.compilers.intermediate.util.BackendMode
+# import edu.yu.compilers.intermediate.util.CrossReferencer
 #
-# import java.util.ArrayList;
-# import java.util.HashSet;
+# import java.util.ArrayList
+# import java.util.HashSet
 #
-# import static edu.yu.compilers.frontend.SemanticErrorHandler.Code.*;
-# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*;
-# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Routine.DECLARED;
-# import static edu.yu.compilers.intermediate.type.Typespec.Form.*;
-# import static edu.yu.compilers.intermediate.util.BackendMode.EXECUTOR;
+# import static edu.yu.compilers.frontend.SemanticErrorHandler.Code.*
+# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*
+# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Routine.DECLARED
+# import static edu.yu.compilers.intermediate.type.Typespec.Form.*
+# import static edu.yu.compilers.intermediate.util.BackendMode.EXECUTOR
 
 
 class Semantics(GraspVisitor):
@@ -46,563 +49,561 @@ class Semantics(GraspVisitor):
     #
     # @param type the data type.
     # @return the default value.
+    
+    @staticmethod
+    def defaultValue(_type: Typespec) :
+        _type = _type.baseType()
 
-    # methods are static by default in python:
-
-    def defaultValue(type):
-        type = type.baseType()
-
-        if type == Predefined.integerType:
+        if _type == Predefined.integerType:
             return 0
-        elif type == Predefined.realType:
+        elif _type == Predefined.realType: 
             return 0.0
-        elif type == Predefined.booleanType:
+        elif _type == Predefined.booleanType: 
             return False
-        elif type == Predefined.charType:
+        elif _type == Predefined.charType: 
             return '#'
-        else:  # string
-            return '#'
+        else:
+            return "#"
 
-    def getProgramId(self):
+    def getProgramId(self) :
         return self.programId
+    
 
-    def getErrorCount(self):
+    def getErrorCount(self) :
         return self.error.get_count()
+    
 
-    def printSymbolTableStack(self):
+    def printSymbolTableStack(self) :
         # Print the cross-reference table.
-        crossReferencer = CrossReferencer()
+        crossReferencer =  CrossReferencer()
         crossReferencer._print(self.symTableStack)
+    
 
-    def visitProgram(self, ctx):
-        self.visit(ctx.programHeader())
-        self.visit(ctx.block().declarations())
-        self.visit(ctx.block().compoundStatement())
+    
+    def visitProgram(self, ctx) :
+        self.self.visit(ctx.programHeader())
+        self.self.visit(ctx.block().declarations())
+        self.self.visit(ctx.block().compoundStatement())
+
         return None
-
-    # @Override
-    # public Object visitProgramHeader(PascalParser.ProgramHeaderContext ctx) {
-    #     PascalParser.ProgramIdentifierContext idCtx = ctx.programIdentifier();
-    #     # String programName = idCtx.IDENTIFIER().getText();  // don't shift case
-
-    #     programId = symTableStack.enterLocal(programName, PROGRAM);
-    #     programId.setRoutineSymTable(symTableStack.push());
-
-    #     symTableStack.setProgramId(programId);
-    #     symTableStack.getLocalSymTable().setOwner(programId);
-
-    #     idCtx.entry = programId;
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitConstantDefinition(PascalParser.ConstantDefinitionContext ctx) {
-    #     PascalParser.ConstantIdentifierContext idCtx = ctx.constantIdentifier();
-    #     String constantName = idCtx.IDENTIFIER().getText().toLowerCase();
-    #     SymTableEntry constantId = symTableStack.lookupLocal(constantName);
-
-    #     if (constantId == null) {
-    #         PascalParser.ConstantContext constCtx = ctx.constant();
-    #         Object constValue = visit(constCtx);
-
-    #         constantId = symTableStack.enterLocal(constantName, CONSTANT);
-    #         constantId.setValue(constValue);
-    #         constantId.setType(constCtx.type);
-
-    #         idCtx.entry = constantId;
-    #         idCtx.type = constCtx.type;
-    #     } else {
-    #         error.flag(REDECLARED_IDENTIFIER, ctx);
-
-    #         idCtx.entry = constantId;
-    #         idCtx.type = Predefined.integerType;
-    #     }
-
-    #     constantId.appendLineNumber(ctx.getStart().getLine());
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitConstant(PascalParser.ConstantContext ctx) {
-    #     if (ctx.IDENTIFIER() != null) {
-    #         String constantName = ctx.IDENTIFIER().getText().toLowerCase();
-    #         SymTableEntry constantId = symTableStack.lookup(constantName);
-
-    #         if (constantId != null) {
-    #             Kind kind = constantId.getKind();
-    #             if ((kind != CONSTANT) && (kind != ENUMERATION_CONSTANT)) {
-    #                 error.flag(INVALID_CONSTANT, ctx);
-    #             }
-
-    #             ctx.type = constantId.getType();
-    #             ctx.value = constantId.getValue();
-
-    #             constantId.appendLineNumber(ctx.getStart().getLine());
-    #         } else {
-    #             error.flag(UNDECLARED_IDENTIFIER, ctx);
-
-    #             ctx.type = Predefined.integerType;
-    #             ctx.value = 0;
-    #         }
-    #     } else if (ctx.characterConstant() != null) {
-    #         ctx.type = Predefined.charType;
-    #         ctx.value = ctx.getText().charAt(1);
-    #     } else if (ctx.stringConstant() != null) {
-    #         String pascalString = ctx.stringConstant().STRING().getText();
-    #         String unquoted = pascalString.substring(1, pascalString.length() - 1);
-    #         ctx.type = Predefined.stringType;
-    #         ctx.value = unquoted.replace("''", "'").replace("\"", "\\\"");
-    #     } else  // number
-    #     {
-    #         if (ctx.unsignedNumber().integerConstant() != null) {
-    #             ctx.type = Predefined.integerType;
-    #             ctx.value = Integer.parseInt(ctx.getText());
-    #         } else {
-    #             ctx.type = Predefined.realType;
-    #             ctx.value = Float.parseFloat(ctx.getText());
-    #         }
-    #     }
-
-    #     return ctx.value;
-    # }
-
-    # @Override
-    # public Object visitTypeDefinition(PascalParser.TypeDefinitionContext ctx) {
-    #     PascalParser.TypeIdentifierContext idCtx = ctx.typeIdentifier();
-    #     String typeName = idCtx.IDENTIFIER().getText().toLowerCase();
-    #     SymTableEntry typeId = symTableStack.lookupLocal(typeName);
-
-    #     PascalParser.TypeSpecificationContext typespecCtx = ctx.typeSpecification();
-
-    #     #  If it's a record type, create a named record type.
-    #     if (typespecCtx instanceof PascalParser.RecordTypespecContext) {
-    #         typeId = createRecordType((PascalParser.RecordTypespecContext) typespecCtx, typeName);
-    #     }
-
-    #     // Enter the type name of any other type into the symbol table.
-    #     else if (typeId == null) {
-    #         visit(typespecCtx);
-
-    #         typeId = symTableStack.enterLocal(typeName, TYPE);
-    #         typeId.setType(typespecCtx.type);
-    #         typespecCtx.type.setIdentifier(typeId);
-    #     }
-
-    #     // Redeclared identifier.
-    #     else {
-    #         error.flag(REDECLARED_IDENTIFIER, ctx);
-    #     }
-
-    #     idCtx.entry = typeId;
-    #     idCtx.type = typespecCtx.type;
-
-    #     typeId.appendLineNumber(ctx.getStart().getLine());
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitRecordTypespec(PascalParser.RecordTypespecContext ctx) {
-    #     // Create an unnamed record type.
-    #     String recordTypeName = SymTable.generateUnnamedName();
-    #     createRecordType(ctx, recordTypeName);
-
-    #     return null;
-    # }
-
-    # /**
-    #  * Create a new record type.
-    #  *
-    #  * @param recordTypeSpecCtx the RecordTypespecContext.
-    #  * @param recordTypeName    the name of the record type.
-    #  * @return the symbol table entry of the record type identifier.
-    #  */
-    # private SymTableEntry createRecordType(PascalParser.RecordTypespecContext recordTypeSpecCtx, String recordTypeName) {
-    #     PascalParser.RecordTypeContext recordTypeCtx = recordTypeSpecCtx.recordType();
-    #     Typespec recordType = new Typespec(RECORD);
-
-    #     SymTableEntry recordTypeId = symTableStack.enterLocal(recordTypeName, TYPE);
-    #     recordTypeId.setType(recordType);
-    #     recordType.setIdentifier(recordTypeId);
-
-    #     String recordTypePath = createRecordTypePath(recordType);
-    #     recordType.setRecordTypePath(recordTypePath);
-
-    #     #  Enter the record fields into the record type's symbol table.
-    #     SymTable recordSymTable = createRecordSymTable(recordTypeCtx.recordFields(), recordTypeId);
-    #     recordType.setRecordSymTable(recordSymTable);
-
-    #     recordTypeCtx.entry = recordTypeId;
-    #     recordTypeSpecCtx.type = recordType;
-
-    #     return recordTypeId;
-    # }
-
-    # /**
-    #  * Create the fully qualified type pathname of a record type.
-    #  *
-    #  * @param recordType the record type.
-    #  * @return the pathname.
-    #  */
-    # private String createRecordTypePath(Typespec recordType) {
-    #     SymTableEntry recordId = recordType.getIdentifier();
-    #     SymTableEntry parentId = recordId.getSymTable().getOwner();
-    #     String path = recordId.getName();
-
-    #     while ((parentId.getKind() == TYPE) && (parentId.getType().getForm() == RECORD)) {
-    #         path = parentId.getName() + "$" + path;
-    #         parentId = parentId.getSymTable().getOwner();
-    #     }
-
-    #     path = parentId.getName() + "$" + path;
-    #     return path;
-    # }
-
-    # /**
-    #  * Create the symbol table for a record type.
-    #  *
-    #  * @param ctx     the RecordFieldsContext,
-    # #  * @param ownerId the symbol table entry of the owner's identifier.
-    #  * @return the symbol table.
-    #  */
-    # private SymTable createRecordSymTable(PascalParser.RecordFieldsContext ctx, SymTableEntry ownerId) {
-    #     SymTable recordSymTable = symTableStack.push();
-
-    #     recordSymTable.setOwner(ownerId);
-    #     visit(ctx.variableDeclarationsList());
-    #     recordSymTable.resetVariables(RECORD_FIELD);
-    #     symTableStack.pop();
-
-    #     return recordSymTable;
-    # }
-
-    # @Override
-    # public Object visitSimpleTypespec(PascalParser.SimpleTypespecContext ctx) {
-    #     visit(ctx.simpleType());
-    #     ctx.type = ctx.simpleType().type;
-
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitTypeIdentifierTypespec(PascalParser.TypeIdentifierTypespecContext ctx) {
-    #     visit(ctx.typeIdentifier());
-    #     ctx.type = ctx.typeIdentifier().type;
-
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitTypeIdentifier(PascalParser.TypeIdentifierContext ctx) {
-    #     String typeName = ctx.IDENTIFIER().getText().toLowerCase();
-    #     SymTableEntry typeId = symTableStack.lookup(typeName);
-
-    #     if (typeId != null) {
-    #         if (typeId.getKind() != TYPE) {
-    #             error.flag(INVALID_TYPE, ctx);
-    #             ctx.type = Predefined.integerType;
-    #         } else {
-    #             ctx.type = typeId.getType();
-    #         }
-
-    #         typeId.appendLineNumber(ctx.start.getLine());
-    #     } else {
-    #         error.flag(UNDECLARED_IDENTIFIER, ctx);
-    #         ctx.type = Predefined.integerType;
-    #     }
-
-    #     ctx.entry = typeId;
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitEnumerationTypespec(PascalParser.EnumerationTypespecContext ctx) {
-    #     Typespec enumType = new Typespec(ENUMERATION);
-    #     ArrayList<SymTableEntry> constants = new ArrayList<>();
-    #     int value = -1;
-
-    #     // Loop over the enumeration constants.
-    #     for (PascalParser.EnumerationConstantContext constCtx : ctx.enumerationType().enumerationConstant()) {
-    #         PascalParser.ConstantIdentifierContext constIdCtx = constCtx.constantIdentifier();
-    #         String constantName = constIdCtx.IDENTIFIER().getText().toLowerCase();
-    #         SymTableEntry constantId = symTableStack.lookupLocal(constantName);
-
-    #         if (constantId == null) {
-    #             constantId = symTableStack.enterLocal(constantName, ENUMERATION_CONSTANT);
-    #             constantId.setType(enumType);
-    #             constantId.setValue(++value);
-
-    #             constants.add(constantId);
-    #         } else {
-    #             error.flag(REDECLARED_IDENTIFIER, constCtx);
-    #         }
-
-    #         constIdCtx.entry = constantId;
-    #         constIdCtx.type = enumType;
-
-    #         constantId.appendLineNumber(ctx.getStart().getLine());
-    #     }
-
-    #     enumType.setEnumerationConstants(constants);
-    #     ctx.type = enumType;
-
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitSubrangeTypespec(PascalParser.SubrangeTypespecContext ctx) {
-    #     Typespec type = new Typespec(SUBRANGE);
-    #     PascalParser.SubrangeTypeContext subCtx = ctx.subrangeType();
-    #     PascalParser.ConstantContext minCtx = subCtx.constant().get(0);
-    #     PascalParser.ConstantContext maxCtx = subCtx.constant().get(1);
-
-    #     Object minObj = visit(minCtx);
-    #     Object maxObj = visit(maxCtx);
-
-    #     Typespec minType = minCtx.type;
-    #     Typespec maxType = maxCtx.type;
-
-    #     if (((minType.getForm() != SCALAR) && (minType.getForm() != ENUMERATION)) || (minType == Predefined.realType) || (minType == Predefined.stringType)) {
-    #         error.flag(INVALID_CONSTANT, minCtx);
-    #         minType = Predefined.integerType;
-    #         minObj = 0;
-    #     }
-
-    #     int minValue;
-    #     int maxValue;
-
-    #     if (minType == Predefined.integerType) {
-    #         minValue = (Integer) minObj;
-    #         maxValue = (Integer) maxObj;
-    #     } else if (minType == Predefined.charType) {
-    #         minValue = (Character) minObj;
-    #         maxValue = (Character) maxObj;
-    #     } else  // enumeration constants
-    #     {
-    #         minValue = (Integer) minCtx.value;
-    #         maxValue = (Integer) maxCtx.value;
-    #     }
-
-    #     if ((maxType != minType) || (minValue > maxValue)) {
-    #         error.flag(INVALID_CONSTANT, maxCtx);
-    #         maxValue = minValue;
-    #     }
-
-    #     type.setSubrangeBaseType(minType);
-    #     type.setSubrangeMinValue(minValue);
-    #     type.setSubrangeMaxValue(maxValue);
-
-    #     ctx.type = type;
-    #     return null;
-    # }
-
-    # @Override
-    # public Object visitArrayTypespec(PascalParser.ArrayTypespecContext ctx) {
-    #     Typespec arrayType = new Typespec(ARRAY);
-    #     PascalParser.ArrayTypeContext arrayCtx = ctx.arrayType();
-    #     PascalParser.ArrayDimensionListContext listCtx = arrayCtx.arrayDimensionList();
-
-    #     ctx.type = arrayType;
-
-    #     // Loop over the array dimensions.
-    #     int count = listCtx.simpleType().size();
-    #     for (int i = 0; i < count; i++) {
-    #         PascalParser.SimpleTypeContext simpleCtx = listCtx.simpleType().get(i);
-    #         visit(simpleCtx);
-    #         arrayType.setArrayIndexType(simpleCtx.type);
-    #         arrayType.setArrayElementCount(typeCount(simpleCtx.type));
-
-    #         if (i < count - 1) {
-    #             Typespec elementType = new Typespec(ARRAY);
-    #             arrayType.setArrayElementType(elementType);
-    #             arrayType = elementType;
-    #         }
-    #     }
-
-    #     visit(arrayCtx.typeSpecification());
-    #     Typespec elementType = arrayCtx.typeSpecification().type;
-    #     arrayType.setArrayElementType(elementType);
-
-    #     return null;
-    # }
-
-    # /**
-    #  * Return the number of values in a datatype.
-    #  *
-    #  * @param type the datatype.
-    #  * @return the number of values.
-    #  */
-    # private int typeCount(Typespec type) {
-    #     int count;
-
-    #     if (type.getForm() == ENUMERATION) {
-    #         ArrayList<SymTableEntry> constants = type.getEnumerationConstants();
-    #         count = constants.size();
-    #     } else  // subrange
-    #     {
-    #         int minValue = type.getSubrangeMinValue();
-    #         int maxValue = type.getSubrangeMaxValue();
-    #         count = maxValue - minValue + 1;
-    #     }
-
-    #     return count;
-    # }
-
-    # @Override
-    # public Object visitVariableDeclarations(PascalParser.VariableDeclarationsContext ctx) {
-    #     PascalParser.TypeSpecificationContext typeCtx = ctx.typeSpecification();
-    #     visit(typeCtx);
-
-    #     PascalParser.VariableIdentifierListContext listCtx = ctx.variableIdentifierList();
-
-    #     // Loop over the variables being declared.
-    #     for (PascalParser.VariableIdentifierContext idCtx : listCtx.variableIdentifier()) {
-    #         int lineNumber = idCtx.getStart().getLine();
-    #         String variableName = idCtx.IDENTIFIER().getText().toLowerCase();
-    #         SymTableEntry variableId = symTableStack.lookupLocal(variableName);
-
-    #         if (variableId == null) {
-    #             variableId = symTableStack.enterLocal(variableName, VARIABLE);
-    #             variableId.setType(typeCtx.type);
-
-    #             // Assign slot numbers to local variables.
-    #             SymTable symTable = variableId.getSymTable();
-    #             if (symTable.getNestingLevel() > 1) {
-    #                 variableId.setSlotNumber(symTable.nextSlotNumber());
-    #             }
-
-    #             idCtx.entry = variableId;
-    #         } else {
-    #             error.flag(REDECLARED_IDENTIFIER, ctx);
-    #         }
-
-    #         variableId.appendLineNumber(lineNumber);
-    #     }
-
-    #     return null;
-    # }
-
-    # @Override
-    # @SuppressWarnings("unchecked")
-    # public Object visitRoutineDefinition(PascalParser.RoutineDefinitionContext ctx) {
-    #     PascalParser.FunctionHeadContext funcCtx = ctx.functionHead();
-    #     PascalParser.ProcedureHeadContext procCtx = ctx.procedureHead();
-    #     PascalParser.RoutineIdentifierContext idCtx;
-    #     PascalParser.ParametersContext parameters;
-    #     boolean functionDefinition = funcCtx != null;
-    #     Typespec returnType = null;
-    #     String routineName;
-
-    #     if (functionDefinition) {
-    #         idCtx = funcCtx.routineIdentifier();
-    #         parameters = funcCtx.parameters();
-    #     } else {
-    #         idCtx = procCtx.routineIdentifier();
-    #         parameters = procCtx.parameters();
-    #     }
-
-    #     routineName = idCtx.IDENTIFIER().getText().toLowerCase();
-    #     SymTableEntry routineId = symTableStack.lookupLocal(routineName);
-
-    #     if (routineId != null) {
-    #         error.flag(REDECLARED_IDENTIFIER, ctx.getStart().getLine(), routineName);
-    #         return null;
-    #     }
-
-    #     routineId = symTableStack.enterLocal(routineName, functionDefinition ? FUNCTION : PROCEDURE);
-    #     routineId.setRoutineCode(DECLARED);
-    #     idCtx.entry = routineId;
-
-    #     #  Append to the parent routine's list of subroutines.
-    #     SymTableEntry parentId = symTableStack.getLocalSymTable().getOwner();
-    #     parentId.appendSubroutine(routineId);
-
-    #     routineId.setRoutineSymTable(symTableStack.push());
-    #     idCtx.entry = routineId;
-
-    #     SymTable symTable = symTableStack.getLocalSymTable();
-    #     symTable.setOwner(routineId);
-
-    #     if (parameters != null) {
-    #         ArrayList<SymTableEntry> parameterIds = (ArrayList<SymTableEntry>) visit(parameters.parameterDeclarationsList());
-    #         routineId.setRoutineParameters(parameterIds);
-
-    #         for (SymTableEntry paramId : parameterIds) {
-    #             paramId.setSlotNumber(symTable.nextSlotNumber());
-    #         }
-    #     }
-
-    #     if (functionDefinition) {
-    #         PascalParser.TypeIdentifierContext typeIdCtx = funcCtx.typeIdentifier();
-    #         visit(typeIdCtx);
-    #         returnType = typeIdCtx.type;
-
-    #         if (returnType.getForm() != SCALAR) {
-    #             error.flag(INVALID_RETURN_TYPE, typeIdCtx);
-    #             returnType = Predefined.integerType;
-    #         }
-
-    #         routineId.setType(returnType);
-    #         idCtx.type = returnType;
-    #     } else {
-    #         idCtx.type = null;
-    #     }
-
-    #     visit(ctx.block().declarations());
-
-    #     #  Enter the function's associated variable into its symbol table.
-    #     if (functionDefinition) {
-    #         SymTableEntry assocVarId = symTableStack.enterLocal(routineName, VARIABLE);
-    #         assocVarId.setSlotNumber(symTable.nextSlotNumber());
-    #         assocVarId.setType(returnType);
-    #     }
-
-    #     visit(ctx.block().compoundStatement());
-    #     routineId.setExecutable(ctx.block().compoundStatement());
-
-    #     symTableStack.pop();
-    #     return null;
-    # }
-
-    # @Override
-    # @SuppressWarnings("unchecked")
-    # public Object visitParameterDeclarationsList(PascalParser.ParameterDeclarationsListContext ctx) {
-    #     ArrayList<SymTableEntry> parameterList = new ArrayList<>();
-
-    #     // Loop over the parameter declarations.
-    #     for (PascalParser.ParameterDeclarationsContext dclCtx : ctx.parameterDeclarations()) {
-    #         ArrayList<SymTableEntry> parameterSublist = (ArrayList<SymTableEntry>) visit(dclCtx);
-    #         parameterList.addAll(parameterSublist);
-    #     }
-
-    #     return parameterList;
-    # }
-
-    def visitParameterDeclarations(self, ctx):
-        kind = REFERENCE_PARAMETER if ctx.VAR() is not None else VALUE_PARAMETER
-        typeCtx = ctx.typeIdentifier()
+    
+
+    
+    def visitProgramHeader(self, ctx) :
+        idCtx = ctx.programIdentifier()
+        programName = idCtx.IDENTIFIER().getText()  # don't shift case
+
+        programId = self.symTableStack.enterLocal(programName, PROGRAM)
+        programId.setRoutineSymTable(self.symTableStack.push())
+
+        self.symTableStack.setProgramId(programId)
+        self.symTableStack.getLocalSymTable().setOwner(programId)
+
+        idCtx.entry = programId
+        return None
+    
+
+    def visitConstantDefinition(self, ctx) :
+        idCtx = ctx.constantIdentifier()
+        constantName = idCtx.IDENTIFIER().getText().toLowerCase()
+        constantId = self.symTableStack.lookupLocal(constantName)
+
+        if constantId is None :
+            constCtx = ctx.constant()
+            constValue = self.visit(constCtx)
+
+            constantId = self.symTableStack.enterLocal(constantName, CONSTANT)
+            constantId.setValue(constValue)
+            constantId.setType(constCtx.type)
+
+            idCtx.entry = constantId
+            idCtx.type = constCtx.type
+        else :
+            self.error.flag(REDECLARED_IDENTIFIER, ctx)
+
+            idCtx.entry = constantId
+            idCtx.type = Predefined.integerType
+
+        constantId.appendLineNumber(ctx.start.getLine()) # TODO WHAT?
+        return None
+    
+
+
+    def visitConstant(self, ctx) :
+        if ctx.IDENTIFIER() is not None:
+            constantName = ctx.IDENTIFIER().getText().toLowerCase()
+            constantId = self.symTableStack.lookup(constantName)
+
+            if constantId is not None:
+                kind = constantId.getKind()
+                if (kind != CONSTANT) and (kind != ENUMERATION_CONSTANT):
+                    self.error.flag(INVALID_CONSTANT, ctx)
+                
+
+                ctx.type = constantId.getType()
+                ctx.value = constantId.getValue()
+
+                constantId.appendLineNumber(ctx.start.getLine())
+            else :
+                self.error.flag(UNDECLARED_IDENTIFIER, ctx)
+
+                ctx.type = Predefined.integerType
+                ctx.value = 0
+            
+        elif ctx.characterConstant() is not None:
+            ctx.type = Predefined.charType
+            ctx.value = ctx.getText().charAt(1)
+        elif ctx.stringConstant() is not None:
+            graspString = ctx.stringConstant().STRING().getText()
+            unquoted = graspString[1, graspString.length() - 1]
+            ctx.type = Predefined.stringType
+            ctx.value = unquoted.replace("''", "'").replace("\"", "\\\"")
+        else:
+            if ctx.unsignedNumber().integerConstant() is not None:
+                ctx.type = Predefined.integerType
+                ctx.value = int(ctx.getText())
+            else :
+                ctx.type = Predefined.realType
+                ctx.value = float(ctx.getText())
+            
+        
+
+        return ctx.value
+    
+
+
+    def visitTypeDefinition(self, ctx) :
+        idCtx = ctx.typeIdentifier()
+        typeName = idCtx.IDENTIFIER().getText().toLowerCase()
+        typeId = self.symTableStack.lookupLocal(typeName)
+
+        typespecCtx = ctx.typeSpecification()
+
+        # If it's a record type, create a named record type.
+        if isinstance(typespecCtx, GraspParser.RecordTypespecContext) :
+            typeId = createRecordType(typespecCtx, typeName)
+        # Enter the type name of any other type into the symbol table.
+        elif typeId is None:
+            self.visit(typespecCtx)
+
+            typeId = self.symTableStack.enterLocal(typeName, TYPE)
+            typeId.setType(typespecCtx.type)
+            typespecCtx.type.setIdentifier(typeId)
+        # Redeclared identifier.
+        else :
+            self.error.flag(REDECLARED_IDENTIFIER, ctx)
+        
+
+        idCtx.entry = typeId
+        idCtx.type = typespecCtx.type
+
+        typeId.appendLineNumber(ctx.start.getLine())
+        return None
+    
+
+    def visitRecordTypespec(self, ctx) :
+        # Create an unnamed record type.
+        recordTypeName = SymTable.generateUnnamedName()
+        createRecordType(ctx, recordTypeName)
+
+        return None
+    
+
+    
+     # Create a new record type.
+     
+     # @param recordTypeSpecCtx the RecordTypespecContext.
+     # @param recordTypeName    the name of the record type.
+     # @return the symbol table entry of the record type identifier.
+     
+    private SymTableEntry createRecordType(PascalParser.RecordTypespecContext recordTypeSpecCtx, String recordTypeName) :
+        PascalParser.RecordTypeContext recordTypeCtx = recordTypeSpecCtx.recordType()
+        Typespec recordType = new Typespec(RECORD)
+
+        SymTableEntry recordTypeId = self.symTableStack.enterLocal(recordTypeName, TYPE)
+        recordTypeId.setType(recordType)
+        recordType.setIdentifier(recordTypeId)
+
+        String recordTypePath = createRecordTypePath(recordType)
+        recordType.setRecordTypePath(recordTypePath)
+
+        // Enter the record fields into the record type's symbol table.
+        SymTable recordSymTable = createRecordSymTable(recordTypeCtx.recordFields(), recordTypeId)
+        recordType.setRecordSymTable(recordSymTable)
+
+        recordTypeCtx.entry = recordTypeId
+        recordTypeSpecCtx.type = recordType
+
+        return recordTypeId
+    
+
+    
+     # Create the fully qualified type pathname of a record type.
+     
+     # @param recordType the record type.
+     # @return the pathname.
+     
+    private String createRecordTypePath(Typespec recordType) :
+        SymTableEntry recordId = recordType.getIdentifier()
+        SymTableEntry parentId = recordId.getSymTable().getOwner()
+        String path = recordId.getName()
+
+        while ((parentId.getKind() == TYPE) and (parentId.getType().getForm() == RECORD)) :
+            path = parentId.getName() + "$" + path
+            parentId = parentId.getSymTable().getOwner()
+        
+
+        path = parentId.getName() + "$" + path
+        return path
+    
+
+    
+     # Create the symbol table for a record type.
+     
+     # @param ctx     the RecordFieldsContext,
+     # @param ownerId the symbol table entry of the owner's identifier.
+     # @return the symbol table.
+     
+    private SymTable createRecordSymTable(PascalParser.RecordFieldsContext ctx, SymTableEntry ownerId) :
+        SymTable recordSymTable = self.symTableStack.push()
+
+        recordSymTable.setOwner(ownerId)
+        self.visit(ctx.variableDeclarationsList())
+        recordSymTable.resetVariables(RECORD_FIELD)
+        self.symTableStack.pop()
+
+        return recordSymTable
+    
+
+    @Override
+    public Object visitSimpleTypespec(PascalParser.SimpleTypespecContext ctx) :
+        self.visit(ctx.simpleType())
+        ctx.type = ctx.simpleType().type
+
+        return None
+    
+
+    @Override
+    public Object visitTypeIdentifierTypespec(PascalParser.TypeIdentifierTypespecContext ctx) :
+        self.visit(ctx.typeIdentifier())
+        ctx.type = ctx.typeIdentifier().type
+
+        return None
+    
+
+    @Override
+    public Object visitTypeIdentifier(PascalParser.TypeIdentifierContext ctx) :
+        String typeName = ctx.IDENTIFIER().getText().toLowerCase()
+        SymTableEntry typeId = self.symTableStack.lookup(typeName)
+
+        if (typeId != None) :
+            if (typeId.getKind() != TYPE) :
+                self.error.flag(INVALID_TYPE, ctx)
+                ctx.type = Predefined.integerType
+             else :
+                ctx.type = typeId.getType()
+            
+
+            typeId.appendLineNumber(ctx.start.getLine())
+         else :
+            self.error.flag(UNDECLARED_IDENTIFIER, ctx)
+            ctx.type = Predefined.integerType
+        
+
+        ctx.entry = typeId
+        return None
+    
+
+    @Override
+    public Object visitEnumerationTypespec(PascalParser.EnumerationTypespecContext ctx) :
+        Typespec enumType = new Typespec(ENUMERATION)
+        ArrayList<SymTableEntry> constants = new ArrayList<>()
+        int value = -1
+
+        // Loop over the enumeration constants.
+        for (PascalParser.EnumerationConstantContext constCtx : ctx.enumerationType().enumerationConstant()) :
+            PascalParser.ConstantIdentifierContext constIdCtx = constCtx.constantIdentifier()
+            String constantName = constIdCtx.IDENTIFIER().getText().toLowerCase()
+            SymTableEntry constantId = self.symTableStack.lookupLocal(constantName)
+
+            if (constantId == None) :
+                constantId = self.symTableStack.enterLocal(constantName, ENUMERATION_CONSTANT)
+                constantId.setType(enumType)
+                constantId.setValue(++value)
+
+                constants.add(constantId)
+             else :
+                self.error.flag(REDECLARED_IDENTIFIER, constCtx)
+            
+
+            constIdCtx.entry = constantId
+            constIdCtx.type = enumType
+
+            constantId.appendLineNumber(ctx.start.).getLine())
+        
+
+        enumType.setEnumerationConstants(constants)
+        ctx.type = enumType
+
+        return None
+    
+
+    @Override
+    public Object visitSubrangeTypespec(PascalParser.SubrangeTypespecContext ctx) :
+        Typespec type = new Typespec(SUBRANGE)
+        PascalParser.SubrangeTypeContext subCtx = ctx.subrangeType()
+        PascalParser.ConstantContext minCtx = subCtx.constant().get(0)
+        PascalParser.ConstantContext maxCtx = subCtx.constant().get(1)
+
+        Object minObj = self.visit(minCtx)
+        Object maxObj = self.visit(maxCtx)
+
+        Typespec minType = minCtx.type
+        Typespec maxType = maxCtx.type
+
+        if (((minType.getForm() != SCALAR) and (minType.getForm() != ENUMERATION)) || (minType == Predefined.realType) || (minType == Predefined.stringType)) :
+            self.error.flag(INVALID_CONSTANT, minCtx)
+            minType = Predefined.integerType
+            minObj = 0
+        
+
+        int minValue
+        int maxValue
+
+        if (minType == Predefined.integerType) :
+            minValue = (Integer) minObj
+            maxValue = (Integer) maxObj
+         else if (minType == Predefined.charType) :
+            minValue = (Character) minObj
+            maxValue = (Character) maxObj
+         else  // enumeration constants
+        :
+            minValue = (Integer) minCtx.value
+            maxValue = (Integer) maxCtx.value
+        
+
+        if ((maxType != minType) || (minValue > maxValue)) :
+            self.error.flag(INVALID_CONSTANT, maxCtx)
+            maxValue = minValue
+        
+
+        type.setSubrangeBaseType(minType)
+        type.setSubrangeMinValue(minValue)
+        type.setSubrangeMaxValue(maxValue)
+
+        ctx.type = type
+        return None
+    
+
+    @Override
+    public Object visitArrayTypespec(PascalParser.ArrayTypespecContext ctx) :
+        Typespec arrayType = new Typespec(ARRAY)
+        PascalParser.ArrayTypeContext arrayCtx = ctx.arrayType()
+        PascalParser.ArrayDimensionListContext listCtx = arrayCtx.arrayDimensionList()
+
+        ctx.type = arrayType
+
+        // Loop over the array dimensions.
+        int count = listCtx.simpleType().size()
+        for (int i = 0 i < count i++) :
+            PascalParser.SimpleTypeContext simpleCtx = listCtx.simpleType().get(i)
+            self.visit(simpleCtx)
+            arrayType.setArrayIndexType(simpleCtx.type)
+            arrayType.setArrayElementCount(typeCount(simpleCtx.type))
+
+            if (i < count - 1) :
+                Typespec elementType = new Typespec(ARRAY)
+                arrayType.setArrayElementType(elementType)
+                arrayType = elementType
+            
+        
+
+        self.visit(arrayCtx.typeSpecification())
+        Typespec elementType = arrayCtx.typeSpecification().type
+        arrayType.setArrayElementType(elementType)
+
+        return None
+    
+
+    
+     # Return the number of values in a datatype.
+     
+     # @param type the datatype.
+     # @return the number of values.
+     
+    private int typeCount(Typespec type) :
+        int count
+
+        if (type.getForm() == ENUMERATION) :
+            ArrayList<SymTableEntry> constants = type.getEnumerationConstants()
+            count = constants.size()
+         else  // subrange
+        :
+            int minValue = type.getSubrangeMinValue()
+            int maxValue = type.getSubrangeMaxValue()
+            count = maxValue - minValue + 1
+        
+
+        return count
+    
+
+    @Override
+    public Object visitVariableDeclarations(PascalParser.VariableDeclarationsContext ctx) :
+        PascalParser.TypeSpecificationContext typeCtx = ctx.typeSpecification()
+        self.visit(typeCtx)
+
+        PascalParser.VariableIdentifierListContext listCtx = ctx.variableIdentifierList()
+
+        // Loop over the variables being declared.
+        for (PascalParser.VariableIdentifierContext idCtx : listCtx.variableIdentifier()) :
+            int lineNumber = idctx.start.).getLine()
+            String variableName = idCtx.IDENTIFIER().getText().toLowerCase()
+            SymTableEntry variableId = self.symTableStack.lookupLocal(variableName)
+
+            if (variableId == None) :
+                variableId = self.symTableStack.enterLocal(variableName, VARIABLE)
+                variableId.setType(typeCtx.type)
+
+                // Assign slot numbers to local variables.
+                SymTable symTable = variableId.getSymTable()
+                if (symTable.getNestingLevel() > 1) :
+                    variableId.setSlotNumber(symTable.nextSlotNumber())
+                
+
+                idCtx.entry = variableId
+             else :
+                self.error.flag(REDECLARED_IDENTIFIER, ctx)
+            
+
+            variableId.appendLineNumber(lineNumber)
+        
+
+        return None
+    
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Object visitRoutineDefinition(PascalParser.RoutineDefinitionContext ctx) :
+        PascalParser.FunctionHeadContext funcCtx = ctx.functionHead()
+        PascalParser.ProcedureHeadContext procCtx = ctx.procedureHead()
+        PascalParser.RoutineIdentifierContext idCtx
+        PascalParser.ParametersContext parameters
+        boolean functionDefinition = funcCtx != None
+        Typespec returnType = None
+        String routineName
+
+        if (functionDefinition) :
+            idCtx = funcCtx.routineIdentifier()
+            parameters = funcCtx.parameters()
+         else :
+            idCtx = procCtx.routineIdentifier()
+            parameters = procCtx.parameters()
+        
+
+        routineName = idCtx.IDENTIFIER().getText().toLowerCase()
+        SymTableEntry routineId = self.symTableStack.lookupLocal(routineName)
+
+        if (routineId != None) :
+            self.error.flag(REDECLARED_IDENTIFIER, ctx.start.).getLine(), routineName)
+            return None
+        
+
+        routineId = self.symTableStack.enterLocal(routineName, functionDefinition ? FUNCTION : PROCEDURE)
+        routineId.setRoutineCode(DECLARED)
+        idCtx.entry = routineId
+
+        // Append to the parent routine's list of subroutines.
+        SymTableEntry parentId = self.symTableStack.getLocalSymTable().getOwner()
+        parentId.appendSubroutine(routineId)
+
+        routineId.setRoutineSymTable(symTableStack.push())
+        idCtx.entry = routineId
+
+        SymTable symTable = self.symTableStack.getLocalSymTable()
+        symTable.setOwner(routineId)
+
+        if (parameters != None) :
+            ArrayList<SymTableEntry> parameterIds = (ArrayList<SymTableEntry>) self.visit(parameters.parameterDeclarationsList())
+            routineId.setRoutineParameters(parameterIds)
+
+            for (SymTableEntry paramId : parameterIds) :
+                paramId.setSlotNumber(symTable.nextSlotNumber())
+            
+        
+
+        if (functionDefinition) :
+            PascalParser.TypeIdentifierContext typeIdCtx = funcCtx.typeIdentifier()
+            self.visit(typeIdCtx)
+            returnType = typeIdCtx.type
+
+            if (returnType.getForm() != SCALAR) :
+                self.error.flag(INVALID_RETURN_TYPE, typeIdCtx)
+                returnType = Predefined.integerType
+            
+
+            routineId.setType(returnType)
+            idCtx.type = returnType
+         else :
+            idCtx.type = None
+        
+
+        self.visit(ctx.block().declarations())
+
+        // Enter the function's associated variable into its symbol table.
+        if (functionDefinition) :
+            SymTableEntry assocVarId = self.symTableStack.enterLocal(routineName, VARIABLE)
+            assocVarId.setSlotNumber(symTable.nextSlotNumber())
+            assocVarId.setType(returnType)
+        
+
+        self.visit(ctx.block().compoundStatement())
+        routineId.setExecutable(ctx.block().compoundStatement())
+
+        self.symTableStack.pop()
+        return None
+    
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Object visitParameterDeclarationsList(PascalParser.ParameterDeclarationsListContext ctx) :
+        ArrayList<SymTableEntry> parameterList = new ArrayList<>()
+
+        // Loop over the parameter declarations.
+        for (PascalParser.ParameterDeclarationsContext dclCtx : ctx.parameterDeclarations()) :
+            ArrayList<SymTableEntry> parameterSublist = (ArrayList<SymTableEntry>) self.visit(dclCtx)
+            parameterList.addAll(parameterSublist)
+        
+
+        return parameterList
+    
+
+    @Override
+    public Object visitParameterDeclarations(PascalParser.ParameterDeclarationsContext ctx) :
+        Kind kind = ctx.VAR() != None ? REFERENCE_PARAMETER : VALUE_PARAMETER
+        PascalParser.TypeIdentifierContext typeCtx = ctx.typeIdentifier()
 
         self.visit(typeCtx)
-        paramType = typeCtx.type
+        Typespec paramType = typeCtx.type
 
-        parameterSublist = []
+        ArrayList<SymTableEntry> parameterSublist = new ArrayList<>()
 
-        # Loop over the parameter identifiers.
-        paramListCtx = ctx.parameterIdentifierList()
-        for paramIdCtx in paramListCtx.parameterIdentifier():
-            lineNumber = paramIdCtx.getStart().getLine()
-            paramName = paramIdCtx.IDENTIFIER().getText().lower()
-            paramId = self.symTabStack.lookupLocal(paramName)
+        // Loop over the parameter identifiers.
+        PascalParser.ParameterIdentifierListContext paramListCtx = ctx.parameterIdentifierList()
+        for (PascalParser.ParameterIdentifierContext paramIdCtx : paramListCtx.parameterIdentifier()) :
+            int lineNumber = paramIdctx.start.).getLine()
+            String paramName = paramIdCtx.IDENTIFIER().getText().toLowerCase()
+            SymTableEntry paramId = self.symTableStack.lookupLocal(paramName)
 
-            if paramId is None:
-                paramId = self.symTabStack.enterLocal(paramName, kind)
+            if (paramId == None) :
+                paramId = self.symTableStack.enterLocal(paramName, kind)
                 paramId.setType(paramType)
 
-                if kind == REFERENCE_PARAMETER and self.mode != EXECUTOR and paramType.getForm() == SCALAR:
-                    self.errorHandler.flag(
-                        INVALID_REFERENCE_PARAMETER, paramIdCtx)
-
-            else:
-                self.errorHandler.flag(REDECLARED_IDENTIFIER, paramIdCtx)
+                if ((kind == REFERENCE_PARAMETER) and (mode != EXECUTOR) and (paramType.getForm() == SCALAR)) :
+                    self.error.flag(INVALID_REFERENCE_PARAMETER, paramIdCtx)
+                
+             else :
+                self.error.flag(REDECLARED_IDENTIFIER, paramIdCtx)
+            
 
             paramIdCtx.entry = paramId
             paramIdCtx.type = paramType
@@ -617,14 +618,14 @@ class Semantics(GraspVisitor):
         lhsCtx = ctx.lhs()
         rhsCtx = ctx.rhs()
 
-        self.visit(lhsCtx)
+        self.visit(lhsCtx) # TODO why not self.visitChildren()?
         self.visit(rhsCtx)
 
         lhsType = lhsCtx.type
         rhsType = rhsCtx.expression().type
 
         if not TypeChecker.areAssignmentCompatible(lhsType, rhsType):
-            self.error(INCOMPATIBLE_ASSIGNMENT, rhsCtx)
+            self.error(INCOMPATIBLE_ASSIGNMENT, rhsCtx) # TODO self.error.flag(INCOMPATIBLE_ASSIGNMENT, rhsCtx)?
 
         return None
 
@@ -635,6 +636,7 @@ class Semantics(GraspVisitor):
         ctx.type = varCtx.type
 
         return None
+      
 
     def visitIfStatement(self, ctx):
         exprCtx = ctx.expression()
@@ -679,10 +681,10 @@ class Semantics(GraspVisitor):
 
                     caseConstCtx.type = constCtx.type
                     caseConstCtx.value = None
-
+cc
                     if constCtx.type != exprType:
                         self.error.flag(TYPE_MISMATCH, constCtx)
-                    elif (constCtx.type == Predefined.integerType) or (constCtx.type.getForm() == ENUMERATION):
+                    elif (constCtx.type == Predefined.integerType) or (constCtx.type.getForm() == ENUMERATION): # TODO == same thing for enums in python? I think its good
                         caseConstCtx.value = int(constValue)
                     elif constCtx.type == Predefined.charType:
                         caseConstCtx.value = chr(constValue)
@@ -692,7 +694,7 @@ class Semantics(GraspVisitor):
                     if caseConstCtx.value in constants:
                         self.error.flag(DUPLICATE_CASE_CONSTANT, constCtx)
                     else:
-                        constants.add(caseConstCtx.value)
+                        constants.add(caseConstCtx.value) # TODO is it not append()?
 
             if stmtCtx is not None:
                 self.visit(stmtCtx)
@@ -734,10 +736,11 @@ class Semantics(GraspVisitor):
             if (controlType.getForm() != SCALAR) or (controlType == Predefined.realType) or (controlType == Predefined.stringType) or (len(varCtx.modifier()) != 0):
                 self.error.flag(INVALID_CONTROL_VARIABLE, varCtx)
         else:
-            self.error.flag(UNDECLARED_IDENTIFIER, ctx.getStart().getLine(), controlName)
+            self.error.flag(UNDECLARED_IDENTIFIER, ctx.getStart().getLine(), controlName) # TODO getStart() or just start?
 
         startCtx = ctx.expression()[0]
         endCtx = ctx.expression()[1]
+
 
         self.visit(startCtx)
         self.visit(endCtx)
@@ -809,6 +812,7 @@ class Semantics(GraspVisitor):
         nameCtx.type = ctx.type
 
         return None
+      
 
     def checkCallArguments(self, listCtx, parameters):
         paramsCount = len(parameters)
@@ -1073,6 +1077,7 @@ class Semantics(GraspVisitor):
 
     def visitVariableFactor(self, ctx):
         varCtx = ctx.variable()
+
         self.visit(varCtx)
         ctx.type = varCtx.type
 
@@ -1093,6 +1098,7 @@ class Semantics(GraspVisitor):
 
         if variableId is not None:
             lineNumber = ctx.start.line
+
             ctx.type = variableId.getType()
             ctx.entry = variableId
             variableId.appendLineNumber(lineNumber)
@@ -1182,4 +1188,5 @@ class Semantics(GraspVisitor):
         exprCtx = ctx.expression()
         self.visit(exprCtx)
         ctx.type = exprCtx.type
+
         return None

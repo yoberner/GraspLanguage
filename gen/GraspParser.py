@@ -9,10 +9,6 @@ else:
 	from typing.io import TextIO
 
 
-    // package antlr4;
-    // import java.util.HashMap;
-    // import edu.yu.compilers.intermediate.symtable.SymTableEntry;
-    // import edu.yu.compilers.intermediate.type.Typespec;
 
 def serializedATN():
     return [

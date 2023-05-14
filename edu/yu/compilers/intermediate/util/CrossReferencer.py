@@ -1,19 +1,14 @@
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
-from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
-from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
 
 
-# /**
-#  * <h1>CrossReferencer</h1>
-#  * <p>Generate a cross-reference listing.</p>
-#  * <p>Adapted from</p>
-#  * <p>Copyright (c) 2020 by Ronald Mak</p>
-#  */
-
+# <h1>CrossReferencer</h1>
+# <p>Generate a cross-reference listing.</p>
+# <p>Adapted from</p>
+# <p>Copyright (c) 2020 by Ronald Mak</p>
 class CrossReferencer:
     NAME_WIDTH = 16
-    NAME_FORMAT = "%-{NAME_WIDTH}s"
+    NAME_FORMAT = "%-{}s".format(NAME_WIDTH)  # TODO Does this work?
     NUMBERS_LABEL = " Line numbers    "
     NUMBERS_UNDERLINE = " ------------    "
     NUMBER_FORMAT = " %03d"
@@ -27,6 +22,7 @@ class CrossReferencer:
     # Print the cross-reference table.
     # @param symTableStack the symbol table stack.
     def _print(self, symTableStack):
+        global printRoutine
         print("\n===== CROSS-REFERENCE TABLE =====")
 
         programId = symTableStack.getProgramId()
@@ -35,6 +31,8 @@ class CrossReferencer:
     # Print a cross-reference table for a routine.
     # @param routineId the routine identifier's symbol table entry.
     def printRoutine(self, routineId):
+        global printColumnHeadings
+        global printSymTable
         kind = routineId.getKind()
         print("\n*** ", str(kind).upper(), " ", routineId.getName(), " ***")
         printColumnHeadings()
@@ -49,103 +47,90 @@ class CrossReferencer:
             for rtnId in subroutineIds:
                 printRoutine(rtnId)
 
-    #
-    # /**
-    #  * Print column headings.
-    #  */
-    # private void printColumnHeadings() {
-    #     System.out.println();
-    #     System.out.println(String.format(NAME_FORMAT, "Identifier") + NUMBERS_LABEL + "Type specification");
-    #     System.out.println(String.format(NAME_FORMAT, "----------") + NUMBERS_UNDERLINE + "------------------");
-    # }
-    #
-    # /**
-    #  * Print the entries in a symbol table.
-    #  *
-    #  * @param symTable the symbol table.
-    #  */
-    # private void printSymTable(SymTable symTable) {
-    #     ArrayList<SymTableEntry> sorted = symTable.sortedEntries();
-    #
-    #     // Loop over the sorted list of table entries
-    #     // to print each entry of this symbol table.
-    #     for (SymTableEntry entry : sorted) {
-    #         ArrayList<Integer> lineNumbers = entry.getLineNumbers();
-    #
-    #         // For each entry, print the identifier name
-    #         // followed by the line numbers.
-    #         System.out.printf(NAME_FORMAT, entry.getName());
-    #         if (lineNumbers != null) {
-    #             for (Integer lineNumber : lineNumbers) {
-    #                 System.out.printf(NUMBER_FORMAT, lineNumber);
-    #             }
-    #         }
-    #
-    #         // Print the symbol table entry.
-    #         System.out.println();
-    #         printEntry(entry);
-    #     }
-    #
-    #     // Loop over the sorted list of entries again
-    #     // to print each nested record's symbol table.
-    #     for (SymTableEntry entry : sorted) {
-    #         if (entry.getKind() == TYPE) {
-    #             Typespec type = entry.getType();
-    #             if (type.getForm() == RECORD) printRecord(type);
-    #         }
-    #     }
-    # }
-    #
-    # /**
-    #  * Print a symbol table entry.
-    #  *
-    #  * @param entry the symbol table entry.
-    #  */
-    # private void printEntry(SymTableEntry entry) {
-    #     Kind kind = entry.getKind();
-    #     int nestingLevel = entry.getSymTable().getNestingLevel();
-    #     System.out.println(INDENT + "Kind: " + kind.toString().replace("_", " "));
-    #     System.out.println(INDENT + "Scope nesting level: " + nestingLevel);
-    #
-    #     // Print the type specification.
-    #     Typespec type = entry.getType();
-    #     printType(type);
-    #
-    #     switch (kind) {
-    #         case CONSTANT -> {
-    #             Object value = entry.getValue();
-    #             System.out.println(INDENT + "Value: " + toString(value, type));
-    #
-    #             // Print the type details only if the type is unnamed.
-    #             if (type.getIdentifier() == null) {
-    #                 printTypeDetail(type);
-    #             }
-    #
-    #         }
-    #         case ENUMERATION_CONSTANT -> {
-    #             Object value = entry.getValue();
-    #             System.out.println(INDENT + "Value: " + toString(value, type));
-    #
-    #         }
-    #         case TYPE -> {
-    #             // Print the type details only when the type is first defined.
-    #             if (entry == type.getIdentifier()) {
-    #                 printTypeDetail(type);
-    #             }
-    #
-    #         }
-    #         case VARIABLE -> {
-    #             // Print the type details only if the type is unnamed.
-    #             if (type.getIdentifier() == null) {
-    #                 printTypeDetail(type);
-    #             }
-    #
-    #         }
-    #         case RECORD_FIELD -> printTypeDetail(type);
-    #         default -> {
-    #         }
-    #     }
-    # }
+    # Print column headings.
+    def printColumnHeadings(self):
+        global NAME_FORMAT
+        global NUMBERS_LABEL
+        global NUMBERS_UNDERLINE
+        print()
+        print((NAME_FORMAT % "Identifier"), NUMBERS_LABEL, "Type specification")
+        print((NAME_FORMAT % "----------"), NUMBERS_UNDERLINE, "------------------")
+
+    # Print the entries in a symbol table.
+    # @param symTable the symbol table.
+    def printSymTable(self, symTable):
+        global NUMBER_FORMAT
+        global printRecord
+        global printEntry
+        sorted = symTable.sortedEntries()
+
+        # Loop over the sorted list of table entries
+        # to print each entry of this symbol table.
+        for entry in sorted:
+            lineNumbers = entry.getLineNumbers()
+
+            # For each entry, print the identifier name
+            # followed by the line numbers.
+            print(NAME_FORMAT % entry.getName(), end="")
+            # chatGPT's print(NAME_FORMAT.format(entry.getName()), end="")
+            if lineNumbers is not None:
+                for lineNumber in lineNumbers:
+                    print(NUMBER_FORMAT % lineNumber, end="")
+
+            # Print the symbol table entry.
+            print()
+            printEntry(entry)
+
+        # Loop over the sorted list of entries again
+        # to print each nested record's symbol table.
+        for entry in sorted:
+            if entry.getKind() == TYPE:
+                type = entry.getType()
+                if type.getForm() == RECORD:
+                    printRecord(type)
+
+    # Print a symbol table entry.
+    # @param entry the symbol table entry.
+    def printEntry(self, entry):
+        global printType
+        global toString
+        global printTypeDetail
+        kind = entry.getKind()
+        nestingLevel = entry.getSymTable().getNestingLevel()
+        print(INDENT + "Kind: " + str(kind).replace("_", " "))
+        print(INDENT + "Scope nesting level: " + str(nestingLevel))
+
+        # Print the type specification.
+        _type = entry.getType()
+        printType(_type)
+
+        if kind == Kind.CONSTANT:
+            value = entry.getValue()
+            print(INDENT + "Value: " + toString(value, _type))
+
+            # Print the type details only if the type is unnamed.
+            if _type.getIdentifier() is None:
+                printTypeDetail(_type)
+
+        elif kind == Kind.ENUMERATION_CONSTANT:
+            value = entry.getValue()
+            print(INDENT + "Value: " + toString(value, _type))
+
+        elif kind == Kind.TYPE:
+            # Print the type details only when the type is first defined.
+            if entry == _type.getIdentifier():
+                printTypeDetail(_type)
+
+        elif kind == Kind.VARIABLE:
+            # Print the type details only if the type is unnamed.
+            if _type.getIdentifier() is None:
+                printTypeDetail(_type)
+
+        elif kind == Kind.RECORD_FIELD:
+            printTypeDetail(_type)
+
+        else:
+            pass
 
     # Print a type specification.
     # @param type the type specification.
@@ -172,7 +157,7 @@ class CrossReferencer:
         if form == ENUMERATION:
             constantIds = type.getEnumerationConstants()
 
-            print(INDENT, "--- Enumeration constants ---");
+            print(INDENT, "--- Enumeration constants ---")
 
             # Print each enumeration constant and its value.
             for constantId in constantIds:
@@ -207,7 +192,7 @@ class CrossReferencer:
                 printTypeDetail(indexType)
 
             print(INDENT, "--- ELEMENT TYPE ---")
-            printType(elementType);
+            printType(elementType)
             print(str(INDENT), str(count), " elements")
 
             # Print the element type details only if the type is unnamed.
