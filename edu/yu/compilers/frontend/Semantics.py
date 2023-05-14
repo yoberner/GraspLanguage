@@ -204,7 +204,7 @@ class Semantics(GraspVisitor):
     def visitRecordTypespec(self, ctx) :
         # Create an unnamed record type.
         recordTypeName = SymTable.generateUnnamedName()
-        createRecordType(ctx, recordTypeName)
+        self.createRecordType(ctx, recordTypeName)
 
         return None
     
@@ -224,11 +224,11 @@ class Semantics(GraspVisitor):
         recordTypeId.setType(recordType)
         recordType.setIdentifier(recordTypeId)
 
-        recordTypePath = createRecordTypePath(recordType)
+        recordTypePath = self.createRecordTypePath(recordType)
         recordType.setRecordTypePath(recordTypePath)
 
         # Enter the record fields into the record type's symbol table.
-        recordSymTable = createRecordSymTable(recordTypeCtx.recordFields(), recordTypeId)
+        recordSymTable = self.createRecordSymTable(recordTypeCtx.recordFields(), recordTypeId)
         recordType.setRecordSymTable(recordSymTable)
 
         recordTypeCtx.entry = recordTypeId
@@ -472,27 +472,26 @@ class Semantics(GraspVisitor):
         return None
     
 
-    
-    @SuppressWarnings("unchecked")
-    def visitRoutineDefinition(ctx) :
+
+    def visitRoutineDefinition(self, ctx) :
         funcCtx = ctx.functionHead()
         procCtx = ctx.procedureHead()
-        idCtx
-        parameters
-        boolean functionDefinition = funcCtx != None
-        Typespec returnType = None
-        routineName
+        idCtx = None
+        parameters = None
+        functionDefinition = funcCtx is not None
+        returnType = None
+        routineName = None
 
-        if (functionDefinition) :
+        if functionDefinition:
             idCtx = funcCtx.routineIdentifier()
             parameters = funcCtx.parameters()
-         else :
+        else :
             idCtx = procCtx.routineIdentifier()
             parameters = procCtx.parameters()
         
 
         routineName = idCtx.IDENTIFIER().getText().toLowerCase()
-        SymTableEntry routineId = self.symTableStack.lookupLocal(routineName)
+        routineId = self.symTableStack.lookupLocal(routineName)
 
         if (routineId != None) :
             self.error.flag(REDECLARED_IDENTIFIER, ctx.start.).getLine(), routineName)
