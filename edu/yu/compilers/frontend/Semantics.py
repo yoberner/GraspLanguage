@@ -35,8 +35,7 @@ from edu.yu.compilers.intermediate.util.CrossReferencer import CrossReferencer
 # import static edu.yu.compilers.intermediate.util.BackendMode.EXECUTOR
 
 
-class Semantics(GraspVisitor) :
-
+class Semantics(GraspVisitor):
 
     def __init__(self, mode):
         # Create and initialize the symbol table stack.
@@ -46,11 +45,11 @@ class Semantics(GraspVisitor) :
         self.mode = mode
         self.error = SemanticErrorHandler()
 
-
     # Return the default value for a data type.
     #
     # @param type the data type.
     # @return the default value.
+    
     @staticmethod
     def defaultValue(_type: Typespec) :
         _type = _type.baseType()
@@ -609,673 +608,585 @@ class Semantics(GraspVisitor) :
             paramIdCtx.entry = paramId
             paramIdCtx.type = paramType
 
-            parameterSublist.add(paramId)
+            parameterSublist.append(paramId)
             paramId.appendLineNumber(lineNumber)
-        
 
         return parameterSublist
-    
 
-    @Override
-    public Object visitAssignmentStatement(PascalParser.AssignmentStatementContext ctx) :
-        PascalParser.LhsContext lhsCtx = ctx.lhs()
-        PascalParser.RhsContext rhsCtx = ctx.rhs()
+    # ? type checker converted?
+    def visitAssignmentStatement(self, ctx: PascalParser.AssignmentStatementContext):
+        lhsCtx = ctx.lhs()
+        rhsCtx = ctx.rhs()
 
-        visitChildren(ctx)
+        self.visit(lhsCtx) # TODO why not self.visitChildren()?
+        self.visit(rhsCtx)
 
-        Typespec lhsType = lhsCtx.type
-        Typespec rhsType = rhsCtx.expression().type
+        lhsType = lhsCtx.type
+        rhsType = rhsCtx.expression().type
 
-        if (!TypeChecker.areAssignmentCompatible(lhsType, rhsType)) :
-            self.error.flag(INCOMPATIBLE_ASSIGNMENT, rhsCtx)
-        
+        if not TypeChecker.areAssignmentCompatible(lhsType, rhsType):
+            self.error(INCOMPATIBLE_ASSIGNMENT, rhsCtx) # TODO self.error.flag(INCOMPATIBLE_ASSIGNMENT, rhsCtx)?
 
         return None
-    
 
-    @Override
-    public Object visitLhs(PascalParser.LhsContext ctx) :
-        PascalParser.VariableContext varCtx = ctx.variable()
+    # ? assuming visit defined
+    def visitLhs(self, ctx):
+        varCtx = ctx.variable()
         self.visit(varCtx)
         ctx.type = varCtx.type
 
         return None
-    
+      
 
-    @Override
-    public Object visitIfStatement(PascalParser.IfStatementContext ctx) :
-        PascalParser.ExpressionContext exprCtx = ctx.expression()
-        PascalParser.TrueStatementContext trueCtx = ctx.trueStatement()
-        PascalParser.FalseStatementContext falseCtx = ctx.falseStatement()
+    def visitIfStatement(self, ctx):
+        exprCtx = ctx.expression()
+        trueCtx = ctx.trueStatement()
+        falseCtx = ctx.falseStatement()
 
         self.visit(exprCtx)
-        Typespec exprType = exprCtx.type
+        exprType = exprCtx.type
 
-        if (!TypeChecker.isBoolean(exprType)) :
+        if not TypeChecker.isBoolean(exprType):
             self.error.flag(TYPE_MUST_BE_BOOLEAN, exprCtx)
-        
 
         self.visit(trueCtx)
-        if (falseCtx != None) self.visit(falseCtx)
+        if falseCtx is not None:
+            self.visit(falseCtx)
 
         return None
-    
 
-    @Override
-    public Object visitCaseStatement(PascalParser.CaseStatementContext ctx) :
-        PascalParser.ExpressionContext exprCtx = ctx.expression()
+    def visitCaseStatement(self, ctx):
+        exprCtx = ctx.expression()
         self.visit(exprCtx)
-        Typespec exprType = exprCtx.type
-        Form exprTypeForm = exprType.getForm()
+        exprType = exprCtx.type
+        exprTypeForm = exprType.getForm()
 
-        if (((exprTypeForm != SCALAR) and (exprTypeForm != ENUMERATION) and (exprTypeForm != SUBRANGE)) || (exprType == Predefined.realType)) :
+        if (((exprTypeForm != SCALAR) and (exprTypeForm != ENUMERATION) and (exprTypeForm != SUBRANGE)) or (exprType == Predefined.realType)):
             self.error.flag(TYPE_MISMATCH, exprCtx)
             exprType = Predefined.integerType
-        
 
-        HashSet<Object> constants = new HashSet<>()
-        PascalParser.CaseBranchListContext branchListCtx = ctx.caseBranchList()
+        constants = set()
+        branchListCtx = ctx.caseBranchList()
 
-        // Loop over the CASE branches.
-        for (PascalParser.CaseBranchContext branchCtx : branchListCtx.caseBranch()) :
-            PascalParser.CaseConstantListContext constListCtx = branchCtx.caseConstantList()
-            PascalParser.StatementContext stmtCtx = branchCtx.statement()
+        # Loop over the CASE branches.
+        for branchCtx in branchListCtx.caseBranch():
+            constListCtx = branchCtx.caseConstantList()
+            stmtCtx = branchCtx.statement()
 
-            if (constListCtx != None) :
-                // Loop over the CASE constants in each branch.
-                for (PascalParser.CaseConstantContext caseConstCtx : constListCtx.caseConstant()) :
-                    PascalParser.ConstantContext constCtx = caseConstCtx.constant()
-                    Object constValue = self.visit(constCtx)
+            if constListCtx is not None:
+                # Loop over the CASE constants in each branch.
+                for caseConstCtx in constListCtx.caseConstant():
+                    constCtx = caseConstCtx.constant()
+                    constValue = self.visit(constCtx)
 
                     caseConstCtx.type = constCtx.type
                     caseConstCtx.value = None
-
-                    if (constCtx.type != exprType) :
+cc
+                    if constCtx.type != exprType:
                         self.error.flag(TYPE_MISMATCH, constCtx)
-                     else if ((constCtx.type == Predefined.integerType) || (constCtx.type.getForm() == ENUMERATION)) :
-                        caseConstCtx.value = (Integer) constValue
-                     else if (constCtx.type == Predefined.charType) :
-                        caseConstCtx.value = (Character) constValue
-                     else if (constCtx.type == Predefined.stringType) :
-                        caseConstCtx.value = (String) constValue
-                    
+                    elif (constCtx.type == Predefined.integerType) or (constCtx.type.getForm() == ENUMERATION): # TODO == same thing for enums in python? I think its good
+                        caseConstCtx.value = int(constValue)
+                    elif constCtx.type == Predefined.charType:
+                        caseConstCtx.value = chr(constValue)
+                    elif constCtx.type == Predefined.stringType:
+                        caseConstCtx.value = str(constValue)
 
-                    if (constants.contains(caseConstCtx.value)) :
+                    if caseConstCtx.value in constants:
                         self.error.flag(DUPLICATE_CASE_CONSTANT, constCtx)
-                     else :
-                        constants.add(caseConstCtx.value)
-                    
-                
-            
+                    else:
+                        constants.add(caseConstCtx.value) # TODO is it not append()?
 
-            if (stmtCtx != None) self.visit(stmtCtx)
-        
+            if stmtCtx is not None:
+                self.visit(stmtCtx)
 
         return None
-    
 
-    @Override
-    public Object visitRepeatStatement(PascalParser.RepeatStatementContext ctx) :
-        PascalParser.ExpressionContext exprCtx = ctx.expression()
+    def visitRepeatStatement(self, ctx):
+        exprCtx = ctx.expression()
         self.visit(exprCtx)
-        Typespec exprType = exprCtx.type
+        exprType = exprCtx.type
 
-        if (!TypeChecker.isBoolean(exprType)) :
+        if not TypeChecker.isBoolean(exprType):
             self.error.flag(TYPE_MUST_BE_BOOLEAN, exprCtx)
-        
 
         self.visit(ctx.statementList())
         return None
-    
 
-    @Override
-    public Object visitWhileStatement(PascalParser.WhileStatementContext ctx) :
-        PascalParser.ExpressionContext exprCtx = ctx.expression()
+    def visitWhileStatement(self, ctx):
+        exprCtx = ctx.expression()
         self.visit(exprCtx)
-        Typespec exprType = exprCtx.type
+        exprType = exprCtx.type
 
-        if (!TypeChecker.isBoolean(exprType)) :
+        if not TypeChecker.isBoolean(exprType):
             self.error.flag(TYPE_MUST_BE_BOOLEAN, exprCtx)
-        
 
         self.visit(ctx.statement())
         return None
-    
 
-    @Override
-    public Object visitForStatement(PascalParser.ForStatementContext ctx) :
-        PascalParser.VariableContext varCtx = ctx.variable()
+    def visitForStatement(self, ctx):
+        varCtx = ctx.variable()
         self.visit(varCtx)
 
-        String controlName = varCtx.variableIdentifier().getText().toLowerCase()
-        Typespec controlType = Predefined.integerType
+        controlName = varCtx.variableIdentifier().getText().lower()
+        controlType = Predefined.integerType
 
-        if (varCtx.entry != None) :
+        if varCtx.entry is not None:
             controlType = varCtx.type
 
-            if ((controlType.getForm() != SCALAR) || (controlType == Predefined.realType) || (controlType == Predefined.stringType) || (varCtx.modifier().size() != 0)) :
+            if (controlType.getForm() != SCALAR) or (controlType == Predefined.realType) or (controlType == Predefined.stringType) or (len(varCtx.modifier()) != 0):
                 self.error.flag(INVALID_CONTROL_VARIABLE, varCtx)
-            
-         else :
-            self.error.flag(UNDECLARED_IDENTIFIER, ctx.start.).getLine(), controlName)
-        
+        else:
+            self.error.flag(UNDECLARED_IDENTIFIER, ctx.getStart().getLine(), controlName) # TODO getStart() or just start?
 
-        PascalParser.ExpressionContext startCtx = ctx.expression().get(0)
-        PascalParser.ExpressionContext endCtx = ctx.expression().get(1)
+        startCtx = ctx.expression()[0]
+        endCtx = ctx.expression()[1]
+
 
         self.visit(startCtx)
         self.visit(endCtx)
 
-        if (startCtx.type != controlType) self.error.flag(TYPE_MISMATCH, startCtx)
-        if (startCtx.type != endCtx.type) self.error.flag(TYPE_MISMATCH, endCtx)
+        if startCtx.type != controlType:
+            self.error.flag(TYPE_MISMATCH, startCtx)
+        if startCtx.type != endCtx.type:
+            self.error.flag(TYPE_MISMATCH, endCtx)
 
         self.visit(ctx.statement())
         return None
-    
 
-    @Override
-    public Object visitProcedureCallStatement(PascalParser.ProcedureCallStatementContext ctx) :
-        PascalParser.ProcedureNameContext nameCtx = ctx.procedureName()
-        PascalParser.ArgumentListContext listCtx = ctx.argumentList()
-        String name = ctx.procedureName().getText().toLowerCase()
-        SymTableEntry procedureId = self.symTableStack.lookup(name)
-        boolean badName = false
+    def visitProcedureCallStatement(self, ctx):
+        nameCtx = ctx.procedureName()
+        listCtx = ctx.argumentList()
+        name = ctx.procedureName().getText().lower()
+        procedureId = self.symTableStack.lookup(name)
+        badName = False
 
-        if (procedureId == None) :
+        if procedureId is None:
             self.error.flag(UNDECLARED_IDENTIFIER, nameCtx)
-            badName = true
-         else if (procedureId.getKind() != PROCEDURE) :
+            badName = True
+        elif procedureId.getKind() != PROCEDURE:
             self.error.flag(NAME_MUST_BE_PROCEDURE, nameCtx)
-            badName = true
-        
+            badName = True
 
-        // Bad procedure name. Do a simple arguments check and then leave.
-        if (badName) :
-            for (PascalParser.ArgumentContext exprCtx : listCtx.argument()) :
+        # Bad procedure name. Do a simple arguments check and then leave.
+        if badName:
+            for exprCtx in listCtx.argument():
                 self.visit(exprCtx)
-            
-        
 
-        // Good procedure name.
-        else :
-            ArrayList<SymTableEntry> params = procedureId.getRoutineParameters()
-            checkCallArguments(listCtx, params)
-        
+        # Good procedure name.
+        else:
+            params = procedureId.getRoutineParameters()
+            self.checkCallArguments(listCtx, params)
 
         nameCtx.entry = procedureId
         return None
-    
 
-    @Override
-    public Object visitFunctionCallFactor(PascalParser.FunctionCallFactorContext ctx) :
-        PascalParser.FunctionCallContext callCtx = ctx.functionCall()
-        PascalParser.FunctionNameContext nameCtx = callCtx.functionName()
-        PascalParser.ArgumentListContext listCtx = callCtx.argumentList()
-        String name = callCtx.functionName().getText().toLowerCase()
-        SymTableEntry functionId = self.symTableStack.lookup(name)
-        boolean badName = false
+    def visitFunctionCallFactor(self, ctx):
+        callCtx = ctx.functionCall()
+        nameCtx = callCtx.functionName()
+        listCtx = callCtx.argumentList()
+        name = callCtx.functionName().getText().lower()
+        functionId = self.symTabStack.lookup(name)
+        badName = False
 
         ctx.type = Predefined.integerType
 
-        if (functionId == None) :
-            self.error.flag(UNDECLARED_IDENTIFIER, nameCtx)
-            badName = true
-         else if (functionId.getKind() != FUNCTION) :
-            self.error.flag(NAME_MUST_BE_FUNCTION, nameCtx)
-            badName = true
-        
+        if functionId is None:
+            self.errorHandler.flag(ErrorCode.UNDECLARED_IDENTIFIER, nameCtx)
+            badName = True
+        elif functionId.getKind() != KindEnum.FUNCTION:
+            self.errorHandler.flag(ErrorCode.NAME_MUST_BE_FUNCTION, nameCtx)
+            badName = True
 
-        // Bad function name. Do a simple arguments check and then leave.
-        if (badName) :
-            for (PascalParser.ArgumentContext exprCtx : listCtx.argument()) :
+        # Bad function name. Do a simple arguments check and then leave.
+        if badName:
+            for exprCtx in listCtx.argument():
                 self.visit(exprCtx)
-            
-        
 
-        // Good function name.
-        else :
-            ArrayList<SymTableEntry> parameters = functionId.getRoutineParameters()
-            checkCallArguments(listCtx, parameters)
+        # Good function name.
+        else:
+            parameters = functionId.getRoutineParameters()
+            self.checkCallArguments(listCtx, parameters)
             ctx.type = functionId.getType()
-        
 
         nameCtx.entry = functionId
         nameCtx.type = ctx.type
 
         return None
-    
+      
 
-    
-     # Perform semantic operations on procedure and function call arguments.
-     
-     # @param listCtx    the ArgumentListContext.
-     # @param parameters the arraylist of parameters to fill.
-     
-    private void checkCallArguments(PascalParser.ArgumentListContext listCtx, ArrayList<SymTableEntry> parameters) :
-        int paramsCount = parameters.size()
-        int argsCount = listCtx != None ? listCtx.argument().size() : 0
+    def checkCallArguments(self, listCtx, parameters):
+        paramsCount = len(parameters)
+        argsCount = len(listCtx.argument()) if listCtx is not None else 0
 
-        if (paramsCount != argsCount) :
+        if paramsCount != argsCount:
             self.error.flag(ARGUMENT_COUNT_MISMATCH, listCtx)
             return
-        
 
-        // Check each argument against the corresponding parameter.
-        for (int i = 0 i < paramsCount i++) :
-            PascalParser.ArgumentContext argCtx = listCtx.argument().get(i)
-            PascalParser.ExpressionContext exprCtx = argCtx.expression()
+        # Check each argument against the corresponding parameter.
+        for i in range(paramsCount):
+            argCtx = listCtx.argument()[i]
+            exprCtx = argCtx.expression()
             self.visit(exprCtx)
 
-            SymTableEntry paramId = parameters.get(i)
-            Typespec paramType = paramId.getType()
-            Typespec argType = exprCtx.type
+            paramId = parameters[i]
+            paramType = paramId.getType()
+            argType = exprCtx.type
 
-            // For a VAR parameter, the argument must be a variable
-            // with the same datatype.
-            if (paramId.getKind() == REFERENCE_PARAMETER) :
-                if (expressionIsVariable(exprCtx)) :
-                    if (paramType != argType) :
+            # For a VAR parameter, the argument must be a variable
+            # with the same datatype.
+            if paramId.getKind() == REFERENCE_PARAMETER:
+                if self.expressionIsVariable(exprCtx):
+                    if paramType != argType:
                         self.error.flag(TYPE_MISMATCH, exprCtx)
-                    
-                 else :
+                else:
                     self.error.flag(ARGUMENT_MUST_BE_VARIABLE, exprCtx)
-                
-            
 
-            // For a value parameter, the argument type must be
-            // assignment compatible with the parameter type.
-            else if (!TypeChecker.areAssignmentCompatible(paramType, argType)) :
+            # For a value parameter, the argument type must be
+            # assignment compatible with the parameter type.
+            elif not TypeChecker.areAssignmentCompatible(paramType, argType):
                 self.error.flag(TYPE_MISMATCH, exprCtx)
-            
-        
-    
 
-    
-     # Determine whether an expression is a variable only.
-     
-     # @param exprCtx the ExpressionContext.
-     # @return true if it's an expression only, else false.
-     
-    private boolean expressionIsVariable(PascalParser.ExpressionContext exprCtx) :
-        // Only a single simple expression?
-        if (exprCtx.simpleExpression().size() == 1) :
-            PascalParser.SimpleExpressionContext simpleCtx = exprCtx.simpleExpression().get(0)
-            // Only a single term?
-            if (simpleCtx.term().size() == 1) :
-                PascalParser.TermContext termCtx = simpleCtx.term().get(0)
+    def expression_is_variable(expr_ctx):
+        # Only a single simple expression?
+        if len(expr_ctx.simpleExpression()) == 1:
+            simple_ctx = expr_ctx.simpleExpression(0)
+            # Only a single term?
+            if len(simple_ctx.term()) == 1:
+                term_ctx = simple_ctx.term(0)
 
-                // Only a single factor?
-                if (termCtx.factor().size() == 1) :
-                    return termCtx.factor().get(0) instanceof PascalParser.VariableFactorContext
-                
-            
-        
+                # Only a single factor?
+                if len(term_ctx.factor()) == 1:
+                    return isinstance(term_ctx.factor(0), PascalParser.VariableFactorContext)
 
-        return false
-    
+        return False
 
-    @Override
-    public Object visitExpression(PascalParser.ExpressionContext ctx) :
-        PascalParser.SimpleExpressionContext simpleCtx1 = ctx.simpleExpression().get(0)
+    def visitExpression(self, ctx):
+        simpleCtx1 = ctx.simpleExpression()[0]
 
-        // First simple expression.
+        # First simple expression.
         self.visit(simpleCtx1)
 
-        Typespec simpleType1 = simpleCtx1.type
+        simpleType1 = simpleCtx1.type
         ctx.type = simpleType1
 
-        PascalParser.RelOpContext relOpCtx = ctx.relOp()
+        relOpCtx = ctx.relOp()
 
-        // Second simple expression?
-        if (relOpCtx != None) :
-            PascalParser.SimpleExpressionContext simpleCtx2 = ctx.simpleExpression().get(1)
+        # Second simple expression?
+        if relOpCtx is not None:
+            simpleCtx2 = ctx.simpleExpression()[1]
             self.visit(simpleCtx2)
 
-            Typespec simpleType2 = simpleCtx2.type
-            if (!TypeChecker.areComparisonCompatible(simpleType1, simpleType2)) :
-                self.error.flag(INCOMPATIBLE_COMPARISON, ctx)
-            
+            simpleType2 = simpleCtx2.type
+            if not TypeChecker.areComparisonCompatible(simpleType1, simpleType2):
+                error.flag(INCOMPATIBLE_COMPARISON, ctx)
 
             ctx.type = Predefined.booleanType
-        
 
         return None
-    
 
-    @Override
-    public Object visitSimpleExpression(PascalParser.SimpleExpressionContext ctx) :
-        int count = ctx.term().size()
-        PascalParser.SignContext signCtx = ctx.sign()
-        boolean hasSign = signCtx != None
-        PascalParser.TermContext termCtx1 = ctx.term().get(0)
+    # @Override
+    # public Object visitSimpleExpression(PascalParser.SimpleExpressionContext ctx) {
+    #     int count = ctx.term().size();
+    #     PascalParser.SignContext signCtx = ctx.sign();
+    #     boolean hasSign = signCtx != null;
+    #     PascalParser.TermContext termCtx1 = ctx.term().get(0);
 
-        if (hasSign) :
-            String sign = signCtx.getText()
-            if (!sign.equals("+") and !sign.equals("-")) :
-                self.error.flag(INVALID_SIGN, signCtx)
-            
-        
+    #     if (hasSign) {
+    #         String sign = signCtx.getText();
+    #         if (!sign.equals("+") && !sign.equals("-")) {
+    #             error.flag(INVALID_SIGN, signCtx);
+    #         }
+    #     }
 
-        // First term.
-        self.visit(termCtx1)
-        Typespec termType1 = termCtx1.type
+    #     // First term.
+    #     visit(termCtx1);
+    #     Typespec termType1 = termCtx1.type;
 
-        // Loop over any subsequent terms.
-        for (int i = 1 i < count i++) :
-            String op = ctx.addOp().get(i - 1).getText().toLowerCase()
-            PascalParser.TermContext termCtx2 = ctx.term().get(i)
-            self.visit(termCtx2)
-            Typespec termType2 = termCtx2.type
+    #     // Loop over any subsequent terms.
+    #     for (int i = 1; i < count; i++) {
+    #         String op = ctx.addOp().get(i - 1).getText().toLowerCase();
+    #         PascalParser.TermContext termCtx2 = ctx.term().get(i);
+    #         visit(termCtx2);
+    #         Typespec termType2 = termCtx2.type;
 
-            // Both operands boolean ==> boolean result. Else type mismatch.
-            if (op.equals("or")) :
-                if (!TypeChecker.isBoolean(termType1)) :
-                    self.error.flag(TYPE_MUST_BE_BOOLEAN, termCtx1)
-                
-                if (!TypeChecker.isBoolean(termType2)) :
-                    self.error.flag(TYPE_MUST_BE_BOOLEAN, termCtx2)
-                
-                if (hasSign) :
-                    self.error.flag(INVALID_SIGN, signCtx)
-                
+    #         // Both operands boolean ==> boolean result. Else type mismatch.
+    #         if (op.equals("or")) {
+    #             if (!TypeChecker.isBoolean(termType1)) {
+    #                 error.flag(TYPE_MUST_BE_BOOLEAN, termCtx1);
+    #             }
+    #             if (!TypeChecker.isBoolean(termType2)) {
+    #                 error.flag(TYPE_MUST_BE_BOOLEAN, termCtx2);
+    #             }
+    #             if (hasSign) {
+    #                 error.flag(INVALID_SIGN, signCtx);
+    #             }
 
-                termType2 = Predefined.booleanType
-             else if (op.equals("+")) :
-                // Both operands integer ==> integer result
-                if (TypeChecker.areBothInteger(termType1, termType2)) :
-                    termType2 = Predefined.integerType
-                
+    #             termType2 = Predefined.booleanType;
+    #         } else if (op.equals("+")) {
+    #             // Both operands integer ==> integer result
+    #             if (TypeChecker.areBothInteger(termType1, termType2)) {
+    #                 termType2 = Predefined.integerType;
+    #             }
 
-                // Both real operands ==> real result 
-                // One real and one integer operand ==> real result
-                else if (TypeChecker.isAtLeastOneReal(termType1, termType2)) :
-                    termType2 = Predefined.realType
-                
+    #             // Both real operands ==> real result
+    #             // One real and one integer operand ==> real result
+    #             else if (TypeChecker.isAtLeastOneReal(termType1, termType2)) {
+    #                 termType2 = Predefined.realType;
+    #             }
 
-                // Both operands string ==> string result
-                else if (TypeChecker.areBothString(termType1, termType2)) :
-                    if (hasSign) self.error.flag(INVALID_SIGN, signCtx)
-                    termType2 = Predefined.stringType
-                
+    #             // Both operands string ==> string result
+    #             else if (TypeChecker.areBothString(termType1, termType2)) {
+    #                 if (hasSign) error.flag(INVALID_SIGN, signCtx);
+    #                 termType2 = Predefined.stringType;
+    #             }
 
-                // Type mismatch.
-                else :
-                    if (!TypeChecker.isIntegerOrReal(termType1)) :
-                        self.error.flag(TYPE_MUST_BE_NUMERIC, termCtx1)
-                        termType2 = Predefined.integerType
-                    
-                    if (!TypeChecker.isIntegerOrReal(termType2)) :
-                        self.error.flag(TYPE_MUST_BE_NUMERIC, termCtx2)
-                        termType2 = Predefined.integerType
-                    
-                
-             else  // -
-            :
-                // Both operands integer ==> integer result
-                if (TypeChecker.areBothInteger(termType1, termType2)) :
-                    termType2 = Predefined.integerType
-                
+    #             // Type mismatch.
+    #             else {
+    #                 if (!TypeChecker.isIntegerOrReal(termType1)) {
+    #                     error.flag(TYPE_MUST_BE_NUMERIC, termCtx1);
+    #                     termType2 = Predefined.integerType;
+    #                 }
+    #                 if (!TypeChecker.isIntegerOrReal(termType2)) {
+    #                     error.flag(TYPE_MUST_BE_NUMERIC, termCtx2);
+    #                     termType2 = Predefined.integerType;
+    #                 }
+    #             }
+    #         } else  // -
+    #         {
+    #             // Both operands integer ==> integer result
+    #             if (TypeChecker.areBothInteger(termType1, termType2)) {
+    #                 termType2 = Predefined.integerType;
+    #             }
 
-                // Both real operands ==> real result 
-                // One real and one integer operand ==> real result
-                else if (TypeChecker.isAtLeastOneReal(termType1, termType2)) :
-                    termType2 = Predefined.realType
-                
+    #             // Both real operands ==> real result
+    #             // One real and one integer operand ==> real result
+    #             else if (TypeChecker.isAtLeastOneReal(termType1, termType2)) {
+    #                 termType2 = Predefined.realType;
+    #             }
 
-                // Type mismatch.
-                else :
-                    if (!TypeChecker.isIntegerOrReal(termType1)) :
-                        self.error.flag(TYPE_MUST_BE_NUMERIC, termCtx1)
-                        termType2 = Predefined.integerType
-                    
-                    if (!TypeChecker.isIntegerOrReal(termType2)) :
-                        self.error.flag(TYPE_MUST_BE_NUMERIC, termCtx2)
-                        termType2 = Predefined.integerType
-                    
-                
-            
+    #             // Type mismatch.
+    #             else {
+    #                 if (!TypeChecker.isIntegerOrReal(termType1)) {
+    #                     error.flag(TYPE_MUST_BE_NUMERIC, termCtx1);
+    #                     termType2 = Predefined.integerType;
+    #                 }
+    #                 if (!TypeChecker.isIntegerOrReal(termType2)) {
+    #                     error.flag(TYPE_MUST_BE_NUMERIC, termCtx2);
+    #                     termType2 = Predefined.integerType;
+    #                 }
+    #             }
+    #         }
 
-            termType1 = termType2
-        
+    #         termType1 = termType2;
+    #     }
 
-        ctx.type = termType1
-        return None
-    
+    #     ctx.type = termType1;
+    #     return null;
+    # }
 
-    @Override
-    public Object visitTerm(PascalParser.TermContext ctx) :
-        int count = ctx.factor().size()
-        PascalParser.FactorContext factorCtx1 = ctx.factor().get(0)
+    # @Override
+    # public Object visitTerm(PascalParser.TermContext ctx) {
+    #     int count = ctx.factor().size();
+    #     PascalParser.FactorContext factorCtx1 = ctx.factor().get(0);
 
-        // First factor.
-        self.visit(factorCtx1)
-        Typespec factorType1 = factorCtx1.type
+    #     // First factor.
+    #     visit(factorCtx1);
+    #     Typespec factorType1 = factorCtx1.type;
 
-        // Loop over any subsequent factors.
-        for (int i = 1 i < count i++) :
-            String op = ctx.mulOp().get(i - 1).getText().toLowerCase()
-            PascalParser.FactorContext factorCtx2 = ctx.factor().get(i)
-            self.visit(factorCtx2)
-            Typespec factorType2 = factorCtx2.type
+    #     // Loop over any subsequent factors.
+    #     for (int i = 1; i < count; i++) {
+    #         String op = ctx.mulOp().get(i - 1).getText().toLowerCase();
+    #         PascalParser.FactorContext factorCtx2 = ctx.factor().get(i);
+    #         visit(factorCtx2);
+    #         Typespec factorType2 = factorCtx2.type;
 
-            switch (op) :
-                case "":
-                    // Both operands integer  ==> integer result
-                    if (TypeChecker.areBothInteger(factorType1, factorType2)) :
-                        factorType2 = Predefined.integerType
-                    
+    #         switch (op) {
+    #             case "*":
+    #                 // Both operands integer  ==> integer result
+    #                 if (TypeChecker.areBothInteger(factorType1, factorType2)) {
+    #                     factorType2 = Predefined.integerType;
+    #                 }
 
-                    // Both real operands ==> real result
-                    // One real and one integer operand ==> real result
-                    else if (TypeChecker.isAtLeastOneReal(factorType1, factorType2)) :
-                        factorType2 = Predefined.realType
-                    
+    #                 // Both real operands ==> real result
+    #                 // One real and one integer operand ==> real result
+    #                 else if (TypeChecker.isAtLeastOneReal(factorType1, factorType2)) {
+    #                     factorType2 = Predefined.realType;
+    #                 }
 
-                    // Type mismatch.
-                    else :
-                        if (!TypeChecker.isIntegerOrReal(factorType1)) :
-                            self.error.flag(TYPE_MUST_BE_NUMERIC, factorCtx1)
-                            factorType2 = Predefined.integerType
-                        
-                        if (!TypeChecker.isIntegerOrReal(factorType2)) :
-                            self.error.flag(TYPE_MUST_BE_NUMERIC, factorCtx2)
-                            factorType2 = Predefined.integerType
-                        
-                    
-                    break
-                case "/":
-                    // All integer and real operand combinations ==> real result
-                    if (TypeChecker.areBothInteger(factorType1, factorType2) || TypeChecker.isAtLeastOneReal(factorType1, factorType2)) :
-                        factorType2 = Predefined.realType
-                    
+    #                 // Type mismatch.
+    #                 else {
+    #                     if (!TypeChecker.isIntegerOrReal(factorType1)) {
+    #                         error.flag(TYPE_MUST_BE_NUMERIC, factorCtx1);
+    #                         factorType2 = Predefined.integerType;
+    #                     }
+    #                     if (!TypeChecker.isIntegerOrReal(factorType2)) {
+    #                         error.flag(TYPE_MUST_BE_NUMERIC, factorCtx2);
+    #                         factorType2 = Predefined.integerType;
+    #                     }
+    #                 }
+    #                 break;
+    #             case "/":
+    #                 // All integer and real operand combinations ==> real result
+    #                 if (TypeChecker.areBothInteger(factorType1, factorType2) || TypeChecker.isAtLeastOneReal(factorType1, factorType2)) {
+    #                     factorType2 = Predefined.realType;
+    #                 }
 
-                    // Type mismatch.
-                    else :
-                        if (!TypeChecker.isIntegerOrReal(factorType1)) :
-                            self.error.flag(TYPE_MUST_BE_NUMERIC, factorCtx1)
-                            factorType2 = Predefined.integerType
-                        
-                        if (!TypeChecker.isIntegerOrReal(factorType2)) :
-                            self.error.flag(TYPE_MUST_BE_NUMERIC, factorCtx2)
-                            factorType2 = Predefined.integerType
-                        
-                    
-                    break
-                case "div":
-                case "mod":
-                    // Both operands integer ==> integer result. Else type mismatch.
-                    if (!TypeChecker.isInteger(factorType1)) :
-                        self.error.flag(TYPE_MUST_BE_INTEGER, factorCtx1)
-                        factorType2 = Predefined.integerType
-                    
-                    if (!TypeChecker.isInteger(factorType2)) :
-                        self.error.flag(TYPE_MUST_BE_INTEGER, factorCtx2)
-                        factorType2 = Predefined.integerType
-                    
-                    break
-                case "and":
-                    // Both operands boolean ==> boolean result. Else type mismatch.
-                    if (!TypeChecker.isBoolean(factorType1)) :
-                        self.error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx1)
-                        factorType2 = Predefined.booleanType
-                    
-                    if (!TypeChecker.isBoolean(factorType2)) :
-                        self.error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx2)
-                        factorType2 = Predefined.booleanType
-                    
-                    break
-            
+    #                 // Type mismatch.
+    #                 else {
+    #                     if (!TypeChecker.isIntegerOrReal(factorType1)) {
+    #                         error.flag(TYPE_MUST_BE_NUMERIC, factorCtx1);
+    #                         factorType2 = Predefined.integerType;
+    #                     }
+    #                     if (!TypeChecker.isIntegerOrReal(factorType2)) {
+    #                         error.flag(TYPE_MUST_BE_NUMERIC, factorCtx2);
+    #                         factorType2 = Predefined.integerType;
+    #                     }
+    #                 }
+    #                 break;
+    #             case "div":
+    #             case "mod":
+    #                 // Both operands integer ==> integer result. Else type mismatch.
+    #                 if (!TypeChecker.isInteger(factorType1)) {
+    #                     error.flag(TYPE_MUST_BE_INTEGER, factorCtx1);
+    #                     factorType2 = Predefined.integerType;
+    #                 }
+    #                 if (!TypeChecker.isInteger(factorType2)) {
+    #                     error.flag(TYPE_MUST_BE_INTEGER, factorCtx2);
+    #                     factorType2 = Predefined.integerType;
+    #                 }
+    #                 break;
+    #             case "and":
+    #                 // Both operands boolean ==> boolean result. Else type mismatch.
+    #                 if (!TypeChecker.isBoolean(factorType1)) {
+    #                     error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx1);
+    #                     factorType2 = Predefined.booleanType;
+    #                 }
+    #                 if (!TypeChecker.isBoolean(factorType2)) {
+    #                     error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx2);
+    #                     factorType2 = Predefined.booleanType;
+    #                 }
+    #                 break;
+    #         }
 
-            factorType1 = factorType2
-        
+    #         factorType1 = factorType2;
+    #     }
 
-        ctx.type = factorType1
-        return None
-    
+    #     ctx.type = factorType1;
+    #     return null;
+    # }
 
-    @Override
-    public Object visitVariableFactor(PascalParser.VariableFactorContext ctx) :
-        PascalParser.VariableContext varCtx = ctx.variable()
+    def visitVariableFactor(self, ctx):
+        varCtx = ctx.variable()
+
         self.visit(varCtx)
         ctx.type = varCtx.type
 
         return None
-    
 
-    @Override
-    public Object visitVariable(PascalParser.VariableContext ctx) :
-        PascalParser.VariableIdentifierContext varIdCtx = ctx.variableIdentifier()
+    def visitVariable(self, ctx):
+        varIdCtx = ctx.variableIdentifier()
 
         self.visit(varIdCtx)
         ctx.entry = varIdCtx.entry
-        ctx.type = variableDatatype(ctx, varIdCtx.type)
+        ctx.type = self.variableDatatype(ctx, varIdCtx.type)
 
         return None
-    
 
-    @Override
-    public Object visitVariableIdentifier(PascalParser.VariableIdentifierContext ctx) :
-        String variableName = ctx.IDENTIFIER().getText().toLowerCase()
-        SymTableEntry variableId = self.symTableStack.lookup(variableName)
+    def visitVariableIdentifier(self, ctx):
+        variableName = ctx.IDENTIFIER().getText().lower()
+        variableId = symTableStack.lookup(variableName)
 
-        if (variableId != None) :
-            int lineNumber = ctx.start.).getLine()
+        if variableId is not None:
+            lineNumber = ctx.start.line
+
             ctx.type = variableId.getType()
             ctx.entry = variableId
             variableId.appendLineNumber(lineNumber)
 
-            Kind kind = variableId.getKind()
-            switch (kind) :
-                case TYPE, PROGRAM, PROGRAM_PARAMETER, PROCEDURE, UNDEFINED -> self.error.flag(INVALID_VARIABLE, ctx)
-                default -> :
-                
-            
-         else :
-            self.error.flag(UNDECLARED_IDENTIFIER, ctx)
+            kind = variableId.getKind()
+            if kind in [Kind.TYPE, Kind.PROGRAM, Kind.PROGRAM_PARAMETER, Kind.PROCEDURE, Kind.UNDEFINED]:
+                error.flag(INVALID_VARIABLE, ctx)
+        else:
+            error.flag(UNDECLARED_IDENTIFIER, ctx)
             ctx.type = Predefined.integerType
-        
 
         return None
-    
 
-    
-     # Determine the datatype of a variable that can have modifiers.
-     
-     # @param varCtx  the VariableContext.
-     # @param varType the variable's datatype without the modifiers.
-     # @return the datatype with any modifiers.
-     
-    private Typespec variableDatatype(PascalParser.VariableContext varCtx, Typespec varType) :
-        Typespec type = varType
+    def variableDatatype(varCtx, varType):
+        type = varType
+        
+        # Loop over the modifiers.
+        for modCtx in varCtx.modifier():
+            # Subscripts.
+            if modCtx.indexList() is not None:
+                indexListCtx = modCtx.indexList()
 
-        // Loop over the modifiers.
-        for (PascalParser.ModifierContext modCtx : varCtx.modifier()) :
-            // Subscripts.
-            if (modCtx.indexList() != None) :
-                PascalParser.IndexListContext indexListCtx = modCtx.indexList()
+                # Loop over the subscripts.
+                for indexCtx in indexListCtx.index():
+                    if type.getForm() == ARRAY:
+                        indexType = type.getArrayIndexType()
+                        exprCtx = indexCtx.expression()
+                        visit(exprCtx)
 
-                // Loop over the subscripts.
-                for (PascalParser.IndexContext indexCtx : indexListCtx.index()) :
-                    if (type.getForm() == ARRAY) :
-                        Typespec indexType = type.getArrayIndexType()
-                        PascalParser.ExpressionContext exprCtx = indexCtx.expression()
-                        self.visit(exprCtx)
+                        if indexType.baseType() != exprCtx.type.baseType():
+                            error.flag(TYPE_MISMATCH, exprCtx)
 
-                        if (indexType.baseType() != exprCtx.type.baseType()) :
-                            self.error.flag(TYPE_MISMATCH, exprCtx)
-                        
-
-                        // Datatype of the next dimension.
+                        # Datatype of the next dimension.
                         type = type.getArrayElementType()
-                     else :
-                        self.error.flag(TOO_MANY_SUBSCRIPTS, indexCtx)
-                    
-                
-             else  // Record field.
-            :
-                if (type.getForm() == RECORD) :
-                    SymTable symTable = type.getRecordSymTable()
-                    PascalParser.FieldContext fieldCtx = modCtx.field()
-                    String fieldName = fieldCtx.IDENTIFIER().getText().toLowerCase()
-                    SymTableEntry fieldId = symTable.lookup(fieldName)
+                    else:
+                        error.flag(TOO_MANY_SUBSCRIPTS, indexCtx)
+            else:  # Record field.
+                if type.getForm() == RECORD:
+                    symTable = type.getRecordSymTable()
+                    fieldCtx = modCtx.field()
+                    fieldName = fieldCtx.IDENTIFIER().getText().lower()
+                    fieldId = symTable.lookup(fieldName)
 
-                    // Field of the record type?
-                    if (fieldId != None) :
+                    # Field of the record type?
+                    if fieldId is not None:
                         type = fieldId.getType()
                         fieldCtx.entry = fieldId
                         fieldCtx.type = type
-                        fieldId.appendLineNumber(modctx.start.).getLine())
-                     else :
-                        self.error.flag(INVALID_FIELD, modCtx)
-                    
-                
+                        fieldId.appendLineNumber(modCtx.getStart().getLine())
+                    else:
+                        error.flag(INVALID_FIELD, modCtx)
 
-                // Not a record variable.
-                else :
-                    self.error.flag(INVALID_FIELD, modCtx)
-                
-            
-        
+                # Not a record variable.
+                else:
+                    error.flag(INVALID_FIELD, modCtx)
 
         return type
-    
 
-    @Override
-    public Object visitNumberFactor(PascalParser.NumberFactorContext ctx) :
-        PascalParser.NumberContext numberCtx = ctx.number()
-        PascalParser.UnsignedNumberContext unsignedCtx = numberCtx.unsignedNumber()
-        PascalParser.IntegerConstantContext integerCtx = unsignedCtx.integerConstant()
+    def visitNumberFactor(self, ctx):
+        numberCtx = ctx.number()
+        unsignedCtx = numberCtx.unsignedNumber()
+        integerCtx = unsignedCtx.integerConstant()
 
-        ctx.type = (integerCtx != None) ? Predefined.integerType : Predefined.realType
+        ctx.type = Predefined.integerType if integerCtx is not None else Predefined.realType
 
         return None
-    
 
-    @Override
-    public Object visitCharacterFactor(PascalParser.CharacterFactorContext ctx) :
+    def visitCharacterFactor(self, ctx):
         ctx.type = Predefined.charType
         return None
-    
 
-    @Override
-    public Object visitStringFactor(PascalParser.StringFactorContext ctx) :
+    def visitStringFactor(self, ctx):
         ctx.type = Predefined.stringType
         return None
-    
 
-    def visitNotFactor(ctx) :
+    def visitNotFactor(self, ctx):
         factorCtx = ctx.factor()
-        self.self.visit(factorCtx)
-
-        if factorCtx.type != Predefined.booleanType:
-            self.error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx)
-
+        self.visit(factorCtx)
+        
+        if factor.type != Predefined.booleanType:
+            error.flag(TYPE_MUST_BE_BOOLEAN, factorCtx)
+        
         ctx.type = Predefined.booleanType
         return None
 
-    def visitParenthesizedFactor(self, ctx) :
+    def visitParenthesizedFactor(self, ctx):
         exprCtx = ctx.expression()
-        super().self.visit(exprCtx)
+        self.visit(exprCtx)
         ctx.type = exprCtx.type
 
         return None
