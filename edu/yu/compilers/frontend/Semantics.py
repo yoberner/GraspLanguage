@@ -7,6 +7,7 @@ from GraspVisitor import GraspVisitor
 from edu.yu.compilers.frontend.SemanticErrorHandler import SemanticErrorHandler
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
 from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
+from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 from edu.yu.compilers.intermediate.symtable.SymTableStack import SymTableStack
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
 from edu.yu.compilers.intermediate.util.CrossReferencer import CrossReferencer
@@ -475,73 +476,71 @@ class Semantics(GraspVisitor):
 
     def visitRoutineDefinition(self, ctx) :
         funcCtx = ctx.functionHead()
-        procCtx = ctx.procedureHead()
+        # procCtx = ctx.procedureHead() # we do not have procedures
         idCtx = None
         parameters = None
         functionDefinition = funcCtx is not None
         returnType = None
-        routineName = None
 
         if functionDefinition:
             idCtx = funcCtx.routineIdentifier()
             parameters = funcCtx.parameters()
-        else :
-            idCtx = procCtx.routineIdentifier()
-            parameters = procCtx.parameters()
-        
+        # else :
+        #     idCtx = procCtx.routineIdentifier()
+        #     parameters = procCtx.parameters()
 
-        routineName = idCtx.IDENTIFIER().getText().toLowerCase()
+        routineName = idCtx.IDENTIFIER().getText().lower()
         routineId = self.symTableStack.lookupLocal(routineName)
 
-        if (routineId != None) :
-            self.error.flag(REDECLARED_IDENTIFIER, ctx.start.).getLine(), routineName)
+        if routineId is not None:
+            self.error.flag(REDECLARED_IDENTIFIER, ctx.start.getLine(), routineName)
             return None
         
 
-        routineId = self.symTableStack.enterLocal(routineName, functionDefinition ? FUNCTION : PROCEDURE)
+        routineId = self.symTableStack.enterLocal(routineName, FUNCTION if functionDefinition else PROCEDURE) # this is an in line conditional in python - cool
         routineId.setRoutineCode(DECLARED)
         idCtx.entry = routineId
 
         # Append to the parent routine's list of subroutines.
-        SymTableEntry parentId = self.symTableStack.getLocalSymTable().getOwner()
+        parentId = self.symTableStack.getLocalSymTable().getOwner()
         parentId.appendSubroutine(routineId)
 
-        routineId.setRoutineSymTable(symTableStack.push())
+        routineId.setRoutineSymTable(self.symTableStack.push())
         idCtx.entry = routineId
 
-        SymTable symTable = self.symTableStack.getLocalSymTable()
+        symTable = self.symTableStack.getLocalSymTable()
         symTable.setOwner(routineId)
 
-        if (parameters != None) :
-            ArrayList<SymTableEntry> parameterIds = (ArrayList<SymTableEntry>) self.visit(parameters.parameterDeclarationsList())
+        if parameters is not None:
+            parameterIds = self.visit(parameters.parameterDeclarationsList())
             routineId.setRoutineParameters(parameterIds)
 
-            for (SymTableEntry paramId : parameterIds) :
+            for paramId in parameterIds :
                 paramId.setSlotNumber(symTable.nextSlotNumber())
             
         
 
-        if (functionDefinition) :
+        if functionDefinition:
             typeIdCtx = funcCtx.typeIdentifier()
             self.visit(typeIdCtx)
             returnType = typeIdCtx.type
 
-            if (returnType.getForm() != SCALAR) :
+            if returnType.getForm() != SCALAR:
                 self.error.flag(INVALID_RETURN_TYPE, typeIdCtx)
                 returnType = Predefined.integerType
             
 
             routineId.setType(returnType)
             idCtx.type = returnType
-         else :
+        else :
             idCtx.type = None
         
 
         self.visit(ctx.block().declarations())
 
         # Enter the function's associated variable into its symbol table.
-        if (functionDefinition) :
-            SymTableEntry assocVarId = self.symTableStack.enterLocal(routineName, VARIABLE)
+        if functionDefinition:
+            assocVarId = self.symTableStack.enterLocal(routineName, VARIABLE)
             assocVarId.setSlotNumber(symTable.nextSlotNumber())
             assocVarId.setType(returnType)
         
@@ -553,45 +552,43 @@ class Semantics(GraspVisitor):
         return None
     
 
-    
-    @SuppressWarnings("unchecked")
-    def visitParameterDeclarationsList(ctx) :
-        ArrayList<SymTableEntry> parameterList = new ArrayList<>()
+    def visitParameterDeclarationsList(self, ctx) :
+        parameterList = []
 
         # Loop over the parameter declarations.
-        for (dclCtx : ctx.parameterDeclarations()) :
-            ArrayList<SymTableEntry> parameterSublist = (ArrayList<SymTableEntry>) self.visit(dclCtx)
-            parameterList.addAll(parameterSublist)
+        for dclCtx in ctx.parameterDeclarations() :
+            parameterSublist = self.visit(dclCtx)
+            parameterList.extend(parameterSublist)
         
 
         return parameterList
     
 
     
-    public Object visitParameterDeclarations(ctx) :
-        Kind kind = ctx.VAR() != None ? REFERENCE_PARAMETER : VALUE_PARAMETER
+    def visitParameterDeclarations(self, ctx) :
+        kind = REFERENCE_PARAMETER if (ctx.VAR() is not None) else VALUE_PARAMETER # kind
         typeCtx = ctx.typeIdentifier()
 
         self.visit(typeCtx)
-        Typespec paramType = typeCtx.type
+        paramType = typeCtx.type
 
-        ArrayList<SymTableEntry> parameterSublist = new ArrayList<>()
+        parameterSublist = []
 
         # Loop over the parameter identifiers.
-        paramListCtx = ctx.parameterIdentifierList()
-        for (paramIdCtx : paramListCtx.parameterIdentifier()) :
-            lineNumber = paramIdctx.start.).getLine()
+        paramListCtx = ctx.parameterIdentifierList() # TODO Our language does not have ParamID lists
+        for paramIdCtx in paramListCtx.parameterIdentifier():
+            lineNumber = paramIdctx.start.getLine()
             paramName = paramIdCtx.IDENTIFIER().getText().toLowerCase()
-            SymTableEntry paramId = self.symTableStack.lookupLocal(paramName)
+            paramId = self.symTableStack.lookupLocal(paramName)
 
-            if (paramId == None) :
+            if paramId is None:
                 paramId = self.symTableStack.enterLocal(paramName, kind)
                 paramId.setType(paramType)
 
-                if ((kind == REFERENCE_PARAMETER) and (mode != EXECUTOR) and (paramType.getForm() == SCALAR)) :
+                if (kind == REFERENCE_PARAMETER) and (mode != EXECUTOR) and (paramType.getForm() == SCALAR):
                     self.error.flag(INVALID_REFERENCE_PARAMETER, paramIdCtx)
                 
-             else :
+            else :
                 self.error.flag(REDECLARED_IDENTIFIER, paramIdCtx)
             
 
