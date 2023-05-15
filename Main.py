@@ -1,5 +1,3 @@
-# package edu.yu.compilers
-#
 import sys
 
 from GraspLexer import GraspLexer
@@ -8,23 +6,6 @@ from edu.yu.compilers.frontend.Semantics import Semantics
 from edu.yu.compilers.frontend.SyntaxErrorHandler import SyntaxErrorHandler
 from edu.yu.compilers.intermediate.util import BackendMode
 from antlr4 import FileStream, InputStream, CommonTokenStream
-
-
-# import antlr4.PascalLexer
-# import antlr4.PascalParser
-# import edu.yu.compilers.backend.compiler.Compiler
-# import edu.yu.compilers.backend.converter.Converter
-# import edu.yu.compilers.backend.interpreter.Executor
-# import edu.yu.compilers.frontend.Semantics
-# import edu.yu.compilers.frontend.SyntaxErrorHandler
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry
-# import edu.yu.compilers.intermediate.util.BackendMode
-# import org.antlr.v4.runtime.CharStream
-# import org.antlr.v4.runtime.CharStreams
-# import org.antlr.v4.runtime.CommonTokenStream
-# import org.antlr.v4.runtime.tree.ParseTree
-
-#
 
 def main(args):
     if args.length != 2:
