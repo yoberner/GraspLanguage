@@ -812,72 +812,70 @@ class Semantics(GraspVisitor):
 
         return None
 
-    
-    def visitSimpleExpression(self, ctx) :
+    def visitSimpleExpression(self, ctx):
         count = ctx.term().size()
         signCtx = ctx.sign()
         hasSign = signCtx is not None
-        termCtx1 = ctx.term().get(0) # TODO Is this correct? is it not [0]
+        termCtx1 = ctx.term().get(0)  # TODO Is this correct? is it not [0]
 
         if hasSign:
             sign = signCtx.getText()
-            if (sign != "+") and (sign != "-") :
-               self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
-            
+            if (sign != "+") and (sign != "-"):
+                self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
+
         # First term.
-        self. visit(termCtx1)
+        self.visit(termCtx1)
         termType1 = termCtx1.type
 
         # Loop over any subsequent terms.
         for i in range(1, count):
-            op = ctx.addOp().get(i - 1).getText().lower() #TODO get?
-            termCtx2 = ctx.term().get(i) #TODO get?
+            op = ctx.addOp().get(i - 1).getText().lower()  # TODO get?
+            termCtx2 = ctx.term().get(i)  # TODO get?
             self.visit(termCtx2)
             termType2 = termCtx2.type
 
             # Both operands boolean ==> boolean result. Else type mismatch.
-            if op == "or" :
-                if not TypeChecker.isBoolean(termType1) :
-                   self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, termCtx1)
-                
-                if not TypeChecker.isBoolean(termType2) :
-                   self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, termCtx2)
-                
-                if hasSign:
-                   self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
+            if op == "or":
+                if not TypeChecker.isBoolean(termType1):
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, termCtx1)
 
+                if not TypeChecker.isBoolean(termType2):
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, termCtx2)
+
+                if hasSign:
+                    self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
 
                 termType2 = Predefined.booleanType
-            elif op == "+" :
+            elif op == "+":
                 # Both operands integer ==> integer result
-                if TypeChecker.areBothInteger(termType1, termType2) :
+                if TypeChecker.areBothInteger(termType1, termType2):
                     termType2 = Predefined.integerType
-                
+
 
                 # Both real operands ==> real result
                 # One real and one integer operand ==> real result
-                elif TypeChecker.isAtLeastOneReal(termType1, termType2) :
+                elif TypeChecker.isAtLeastOneReal(termType1, termType2):
                     termType2 = Predefined.realType
-                
+
 
                 # Both operands string ==> string result
                 elif TypeChecker.areBothString(termType1, termType2):
-                    if hasSign :
+                    if hasSign:
                         self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
                     termType2 = Predefined.stringType
-                
+
 
                 # Type mismatch.
-                else :
+                else:
                     if not TypeChecker.isIntegerOrReal(termType1):
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
-                       termType2 = Predefined.integerType
-                    
-                    if not TypeChecker.isIntegerOrReal(termType2):
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
-                       termType2 = Predefined.integerType
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
+                        termType2 = Predefined.integerType
 
-            else :
+                    if not TypeChecker.isIntegerOrReal(termType2):
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
+                        termType2 = Predefined.integerType
+
+            else:
                 # Both operands integer ==> integer result
                 if TypeChecker.areBothInteger(termType1, termType2):
                     termType2 = Predefined.integerType
@@ -886,110 +884,87 @@ class Semantics(GraspVisitor):
                 elif TypeChecker.isAtLeastOneReal(termType1, termType2):
                     termType2 = Predefined.realType
                 # Type mismatch.
-                else :
+                else:
                     if not TypeChecker.isIntegerOrReal(termType1):
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
-                       termType2 = Predefined.integerType
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
+                        termType2 = Predefined.integerType
                     if not TypeChecker.isIntegerOrReal(termType2):
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
-                       termType2 = Predefined.integerType
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
+                        termType2 = Predefined.integerType
             termType1 = termType2
-
 
         ctx.type = termType1
         return None
-    
 
-    
-    def visitTerm(self,  ctx) :
+    def visitTerm(self, ctx):
         count = len(ctx.factor())
-        factorCtx1 = ctx.factor().get(0) #TODO get?
+        factorCtx1 = ctx.factor().get(0)  # TODO get?
 
         # First factor.
         self.visit(factorCtx1)
         factorType1 = factorCtx1.type
 
         # Loop over any subsequent factors.
-        for i in range(1, count) :
-            op = ctx.mulOp().get(i - 1).getText().lower() #TODO get()?
-            factorCtx2 = ctx.factor().get(i) #TODO get()?
+        for i in range(1, count):
+            op = ctx.mulOp().get(i - 1).getText().lower()  # TODO get()?
+            factorCtx2 = ctx.factor().get(i)  # TODO get()?
             self.visit(factorCtx2)
             factorType2 = factorCtx2.type
 
-            switch (op) :
-                case "*":
-                    # Both operands integer  ==> integer result
-                    if (TypeChecker.areBothInteger(factorType1, factorType2)) :
-                        factorType2 = Predefined.integerType
-                    
-
+            if op == "*":
+                # Both operands integer  ==> integer result
+                if TypeChecker.areBothInteger(factorType1, factorType2):
+                    factorType2 = Predefined.integerType
                     # Both real operands ==> real result
-                    # One real and one integer operand ==> real result
-                    else if (TypeChecker.isAtLeastOneReal(factorType1, factorType2)) :
-                        factorType2 = Predefined.realType
-                    
-
+                # One real and one integer operand ==> real result
+                elif TypeChecker.isAtLeastOneReal(factorType1, factorType2):
+                    factorType2 = Predefined.realType
                     # Type mismatch.
-                    else :
-                        if (!TypeChecker.isIntegerOrReal(factorType1)) :
-                           self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx1)
-                            factorType2 = Predefined.integerType
-                        
-                        if (!TypeChecker.isIntegerOrReal(factorType2)) :
-                           self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx2)
-                            factorType2 = Predefined.integerType
-                        
-                    
-                    break
-                case "/":
-                    # All integer and real operand combinations ==> real result
-                    if (TypeChecker.areBothInteger(factorType1, factorType2) or TypeChecker.isAtLeastOneReal(factorType1, factorType2)) :
-                        factorType2 = Predefined.realType
-                    
+                else:
+                    if not TypeChecker.isIntegerOrReal(factorType1):
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx1)
+                        factorType2 = Predefined.integerType
 
+                    if not TypeChecker.isIntegerOrReal(factorType2):
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx2)
+                        factorType2 = Predefined.integerType
+            elif op == "/":
+                # All integer and real operand combinations ==> real result
+                if TypeChecker.areBothInteger(factorType1, factorType2) or TypeChecker.isAtLeastOneReal(factorType1,
+                                                                                                        factorType2):
+                    factorType2 = Predefined.realType
                     # Type mismatch.
-                    else :
-                        if (!TypeChecker.isIntegerOrReal(factorType1)) :
-                           self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx1)
-                            factorType2 = Predefined.integerType
-                        
-                        if (!TypeChecker.isIntegerOrReal(factorType2)) :
-                           self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx2)
-                            factorType2 = Predefined.integerType
-                        
-                    
-                    break
-                case "div":
-                case "mod":
-                    # Both operands integer ==> integer result. Else type mismatch.
-                    if (!TypeChecker.isInteger(factorType1)) :
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, factorCtx1)
+                else:
+                    if not TypeChecker.isIntegerOrReal(factorType1):
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx1)
                         factorType2 = Predefined.integerType
-                    
-                    if (!TypeChecker.isInteger(factorType2)) :
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, factorCtx2)
+
+                    if not TypeChecker.isIntegerOrReal(factorType2):
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx2)
                         factorType2 = Predefined.integerType
-                    
-                    break
-                case "and":
-                    # Both operands boolean ==> boolean result. Else type mismatch.
-                    if (!TypeChecker.isBoolean(factorType1)) :
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx1)
-                        factorType2 = Predefined.booleanType
-                    
-                    if (!TypeChecker.isBoolean(factorType2)) :
-                       self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx2)
-                        factorType2 = Predefined.booleanType
-                    
-                    break
-            
+            elif op == "div" or op == "mod":
+                # Both operands integer ==> integer result. Else type mismatch.
+                if not TypeChecker.isInteger(factorType1):
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, factorCtx1)
+                    factorType2 = Predefined.integerType
+
+                if not TypeChecker.isInteger(factorType2):
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, factorCtx2)
+                    factorType2 = Predefined.integerType
+            elif op == "and":
+                # Both operands boolean ==> boolean result. Else type mismatch.
+                if not TypeChecker.isBoolean(factorType1):
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx1)
+                    factorType2 = Predefined.booleanType
+
+                if not TypeChecker.isBoolean(factorType2):
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx2)
+                    factorType2 = Predefined.booleanType
 
             factorType1 = factorType2
-        
 
         ctx.type = factorType1
         return None
-    
 
     def visitVariableFactor(self, ctx):
         varCtx = ctx.variable()
@@ -1043,7 +1018,7 @@ class Semantics(GraspVisitor):
                     if type.getForm() == Form.ARRAY:
                         indexType = type.getArrayIndexType()
                         exprCtx = indexCtx.expression()
-                        self. visit(exprCtx)
+                        self.visit(exprCtx)
 
                         if indexType.baseType() != exprCtx.type.baseType():
                             self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, exprCtx)
