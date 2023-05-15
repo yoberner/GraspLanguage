@@ -1,35 +1,30 @@
-from enum import Enum
+from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
+from edu.yu.compilers.intermediate.symtable.SymTable import SymTableEntry
 
+from Form import Form
 
-# /**
-#  * <h1>Typespec</h1>
-#  * <p>The type specification object for various datatypes.</p>
-#  * <p>Adapted from:</p>
-#  * <p>Copyright (c) 2020 by Ronald Mak</p>
-#  * <p>For instructional purposes only.  No warranties.</p>
-#  */
 
 class Typespec:
 
-    def __init__(self, form):
+    def __init__(self, form: Form):
         self.form = form
         self.identifier = None
 
         # Initialize the appropriate type information.
-        if self.form == self.Form.ENUMERATION:
+        if self.form == Form.ENUMERATION:
             self.info = EnumerationInfo()
             self.info.constants = []
-        elif self.form == self.Form.SUBRANGE:
+        elif self.form == Form.SUBRANGE:
             self.info = SubrangeInfo()
             self.info.minValue = 0
             self.info.maxValue = 0
             self.info.baseType = None
-        elif self.form == self.Form.ARRAY:
+        elif self.form == Form.ARRAY:
             self.info = ArrayInfo()
             self.info.indexType = None
             self.info.elementType = None
             self.info.elementCount = 0
-        elif self.form == self.Form.RECORD:
+        elif self.form == Form.RECORD:
             self.info = RecordInfo()
             self.info.typePath = None
             self.info.symTable = None
@@ -40,7 +35,7 @@ class Typespec:
     # @return true if structured, false if not.
 
     def isStructured(self):
-        return (self.form == self.Form.ARRAY) or (self.form == self.Form.RECORD)
+        return (self.form == Form.ARRAY) or (self.form == Form.RECORD)
 
     # Get the type form.
     # @return the form.
@@ -64,14 +59,14 @@ class Typespec:
     # @return the base type.
 
     def baseType(self):
-        if self.form == self.Form.SUBRANGE:
+        if self.form == Form.SUBRANGE:
             return self.info.baseType
         else:
             return self
 
-        # return self.info.baseType if self.form == Form.self.Form.SUBRANGE else self
+        # return self.info.baseType if self.form == Form.SUBRANGE else self
 
-        # return form == Form.self.Form.SUBRANGE ? self.info.baseType : this
+        # return form == Form.SUBRANGE ? self.info.baseType : this
 
     # Get the subrange base type.
     # @return the base type.
@@ -163,7 +158,7 @@ class Typespec:
     def getArrayBaseType(self):
         elemType = self
 
-        while elemType.form == self.self.Form.ARRAY:
+        while elemType.form == self.ARRAY:
             elemType = elemType.getArrayElementType()
 
         return elemType.baseType()
@@ -188,16 +183,6 @@ class Typespec:
     def setRecordTypePath(self, typePath):
         self.info.typePath = typePath
 
-    class Form(Enum):
-        SCALAR = 1
-        ENUMERATION = 2
-        SUBRANGE = 3
-        ARRAY = 4
-        RECORD = 5
-        UNKNOWN = 6
-
-        def __str__(self):
-            return self.name.lower()
 
 
 
