@@ -824,8 +824,6 @@ class Semantics(GraspVisitor):
             if (sign != "+") and (sign != "-") :
                self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
             
-        
-
         # First term.
         self. visit(termCtx1)
         termType1 = termCtx1.type
@@ -847,86 +845,76 @@ class Semantics(GraspVisitor):
                 
                 if hasSign:
                    self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
-                
+
 
                 termType2 = Predefined.booleanType
-             else if op == "+" :
+            elif op == "+" :
                 # Both operands integer ==> integer result
-                if (TypeChecker.areBothInteger(termType1, termType2)) :
+                if TypeChecker.areBothInteger(termType1, termType2) :
                     termType2 = Predefined.integerType
                 
 
                 # Both real operands ==> real result
                 # One real and one integer operand ==> real result
-                else if (TypeChecker.isAtLeastOneReal(termType1, termType2)) :
+                elif TypeChecker.isAtLeastOneReal(termType1, termType2) :
                     termType2 = Predefined.realType
                 
 
                 # Both operands string ==> string result
-                else if (TypeChecker.areBothString(termType1, termType2)) :
-                    if (hasSign)self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
+                elif TypeChecker.areBothString(termType1, termType2):
+                    if hasSign :
+                        self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
                     termType2 = Predefined.stringType
                 
 
                 # Type mismatch.
                 else :
-                    if (!TypeChecker.isIntegerOrReal(termType1)) :
+                    if not TypeChecker.isIntegerOrReal(termType1):
                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
-                        termType2 = Predefined.integerType
+                       termType2 = Predefined.integerType
                     
-                    if (!TypeChecker.isIntegerOrReal(termType2)) :
+                    if not TypeChecker.isIntegerOrReal(termType2):
                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
-                        termType2 = Predefined.integerType
-                    
-                
-             else  # -
-            :
-                # Both operands integer ==> integer result
-                if (TypeChecker.areBothInteger(termType1, termType2)) :
-                    termType2 = Predefined.integerType
-                
+                       termType2 = Predefined.integerType
 
+            else :
+                # Both operands integer ==> integer result
+                if TypeChecker.areBothInteger(termType1, termType2):
+                    termType2 = Predefined.integerType
                 # Both real operands ==> real result
                 # One real and one integer operand ==> real result
-                else if (TypeChecker.isAtLeastOneReal(termType1, termType2)) :
+                elif TypeChecker.isAtLeastOneReal(termType1, termType2):
                     termType2 = Predefined.realType
-                
-
                 # Type mismatch.
                 else :
-                    if (!TypeChecker.isIntegerOrReal(termType1)) :
+                    if not TypeChecker.isIntegerOrReal(termType1):
                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
-                        termType2 = Predefined.integerType
-                    
-                    if (!TypeChecker.isIntegerOrReal(termType2)) :
+                       termType2 = Predefined.integerType
+                    if not TypeChecker.isIntegerOrReal(termType2):
                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
-                        termType2 = Predefined.integerType
-                    
-                
-            
-
+                       termType2 = Predefined.integerType
             termType1 = termType2
-        
+
 
         ctx.type = termType1
         return None
     
 
     
-    public Object visitTerm(GraspParser.TermContext ctx) :
-        int count = ctx.factor().size()
-        GraspParser.FactorContext factorCtx1 = ctx.factor().get(0)
+    def visitTerm(self,  ctx) :
+        count = len(ctx.factor())
+        factorCtx1 = ctx.factor().get(0) #TODO get?
 
         # First factor.
-        self. visit(factorCtx1)
-        Typespec factorType1 = factorCtx1.type
+        self.visit(factorCtx1)
+        factorType1 = factorCtx1.type
 
         # Loop over any subsequent factors.
-        for (int i = 1 i < count i++) :
-            String op = ctx.mulOp().get(i - 1).getText().toLowerCase()
-            GraspParser.FactorContext factorCtx2 = ctx.factor().get(i)
-            self. visit(factorCtx2)
-            Typespec factorType2 = factorCtx2.type
+        for i in range(1, count) :
+            op = ctx.mulOp().get(i - 1).getText().lower() #TODO get()?
+            factorCtx2 = ctx.factor().get(i) #TODO get()?
+            self.visit(factorCtx2)
+            factorType2 = factorCtx2.type
 
             switch (op) :
                 case "*":
