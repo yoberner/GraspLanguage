@@ -41,7 +41,7 @@ class SymTableStack(list):
 
         return symTable
 
-    def _pop(self):
+    def _pop(self): # TODO no issues?
         symTable = super()[self.currentNestingLevel]
         self.currentNestingLevel -= 1
         super().remove(self.currentNestingLevel)
@@ -61,7 +61,7 @@ class SymTableStack(list):
 
         # Search the current and enclosing scopes.
         i = self.currentNestingLevel
-        while (i >= 0) and (foundEntry == None):
+        while (i >= 0) and (foundEntry is None):
             foundEntry = super()[i].lookup(name)
             i += 1
             # it also added a break statement

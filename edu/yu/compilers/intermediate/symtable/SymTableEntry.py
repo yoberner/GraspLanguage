@@ -1,14 +1,9 @@
-# <h1>SymTableEntryImpl</h1>
-# <p>An implementation of a symbol table entry.</p>
-# <p>Adapted from:</p>
-# <p>Copyright (c) 2020 by Ronald Mak</p>
-# <p>For instructional purposes only.  No warranties.</p>
 import abc
+from Kind import Kind
+from Routine import Routine
 from enum import Enum
+from edu.yu.compilers.intermediate.type.Typespec import Typespec
 
-# import edu.yu.compilers.intermediate.type.Typespec;
-#
-# import java.util.ArrayList;
 
 
 class SymTableEntry:
@@ -44,10 +39,9 @@ class SymTableEntry:
         self.slotNumber = None
 
         # Initialize the appropriate entry information.
-        kind = SymTableEntry.Kind
-        if kind ==  kind.CONSTANT or kind == kind.ENUMERATION_CONSTANT or kind == kind.VARIABLE or kind == kind.RECORD_FIELD or kind == kind.VALUE_PARAMETER :
+        if self.kind == Kind.CONSTANT or self.kind == Kind.ENUMERATION_CONSTANT or self.kind == Kind.VARIABLE or self.kind == Kind.RECORD_FIELD or self.kind == Kind.VALUE_PARAMETER :
             self.info = self.ValueInfo()
-        elif kind == kind.PROGRAM or kind == kind.PROCEDURE or kind == kind.FUNCTION:
+        elif self.kind == Kind.PROGRAM or self.kind == Kind.PROCEDURE or self.kind == Kind.FUNCTION:
             self.info = self.RoutineInfo()
             self.info.parameters = []
             self.info.subroutines = []
@@ -60,7 +54,7 @@ class SymTableEntry:
 
     # Get the kind of entry.
     #
-    # @return the kind.
+    # @return the 
 
     def getKind(self) :
         return self.kind
@@ -215,49 +209,4 @@ class SymTableEntry:
     # @param executable the executable code to set.
     def setExecutable(self, executable) :
         self.info.executable = executable
-
-    # What kind of identifier.
-
-    class Kind(Enum):
-        CONSTANT = 1
-        ENUMERATION_CONSTANT = 2
-        TYPE = 3
-        VARIABLE = 4
-        RECORD_FIELD = 5
-        VALUE_PARAMETER = 6
-        REFERENCE_PARAMETER = 7
-        PROGRAM_PARAMETER = 8
-        PROGRAM = 9
-        PROCEDURE = 10
-        FUNCTION = 11
-        UNDEFINED = 12
-
-        def __str__(self):
-          return self.name.lower()
-
-    # Which routine.
-    class Routine(Enum):
-        DECLARED = 1
-        FORWARD = 2
-        READ = 3
-        READLN = 4
-        WRITE = 5
-        WRITELN = 6
-        ABS = 7
-        ARCTAN = 8
-        CHR = 9
-        COS = 10
-        EOF = 11
-        EOLN = 12
-        EXP = 13
-        LN = 14
-        ODD = 15
-        ORD = 16
-        PRED = 17
-        ROUND = 18
-        SIN = 19
-        SQR = 20
-        SQRT = 21
-        SUCC = 22
-        TRUNC = 23
 

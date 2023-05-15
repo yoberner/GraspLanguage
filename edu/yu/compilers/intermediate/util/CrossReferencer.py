@@ -21,7 +21,7 @@ class CrossReferencer:
 
     # Print the cross-reference table.
     # @param symTableStack the symbol table stack.
-    def _print(self, symTableStack):
+    def printCrossRefTable(self, symTableStack):
         global printRoutine
         print("\n===== CROSS-REFERENCE TABLE =====")
 

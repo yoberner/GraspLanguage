@@ -1,20 +1,11 @@
+from edu.yu.compilers.intermediate.symtable.Kind import Kind
+from edu.yu.compilers.intermediate.type.Form import Form
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
+from Routine import Routine
 from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 
-# <h1>Predefined</h1>
-# <p>Enter the predefined Pascal types, identifiers, and constants
-# into the symbol table.</p>
-# <p>Adapted from:</p>
-# <p>Copyright (c) 2020 by Ronald Mak</p>
-# <p>For instructional purposes only.  No warranties.</p>
 
-
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind;
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry.Routine;
-# import edu.yu.compilers.intermediate.type.Typespec;
-#
-# import java.util.ArrayList;
-#
+# static import?
 # import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*;
 # import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Routine.*;
 # import static edu.yu.compilers.intermediate.type.Typespec.Form.ENUMERATION;
@@ -64,9 +55,9 @@ class Predefined:
     # @param symTableStack the symbol table stack to initialize.
     @staticmethod
     def initialize(symTableStack):
-        initializeTypes(symTableStack)
-        initializeConstants(symTableStack)
-        initializeStandardRoutines(symTableStack)
+        Predefined.initializeTypes(symTableStack)
+        Predefined.initializeConstants(symTableStack)
+        Predefined.initializeStandardRoutines(symTableStack)
 
     # Initialize the predefined types.
     #
@@ -74,37 +65,37 @@ class Predefined:
     @staticmethod
     def initializeTypes(symTableStack):
         # Type integer.
-        integerId = symTableStack.enterLocal("integer", TYPE)
-        integerType = Typespec(SCALAR)
-        integerType.setIdentifier(integerId);
-        integerId.setType(integerType)
+        Predefined.integerId = symTableStack.enterLocal("integer", Kind.TYPE)
+        Predefined.integerType = Typespec(Form.SCALAR)
+        Predefined.integerType.setIdentifier(Predefined.integerId);
+        Predefined.integerId.setType(Predefined.integerType)
 
         # // Type real.
-        realId = symTableStack.enterLocal("real", TYPE)
-        realType = Typespec(SCALAR)
-        realType.setIdentifier(realId)
-        realId.setType(realType)
+        Predefined.realId = symTableStack.enterLocal("real", Kind.TYPE)
+        Predefined.realType = Typespec(Form.SCALAR)
+        Predefined.realType.setIdentifier(Predefined.realId)
+        Predefined.realId.setType(Predefined.realType)
 
         # Type boolean.
-        booleanId = symTableStack.enterLocal("boolean", TYPE)
-        booleanType = Typespec(ENUMERATION)
-        booleanType.setIdentifier(booleanId)
-        booleanId.setType(booleanType)
+        Predefined.booleanId = symTableStack.enterLocal("boolean", Kind.TYPE)
+        Predefined.booleanType = Typespec(Form.ENUMERATION)
+        Predefined.booleanType.setIdentifier(Predefined.booleanId)
+        Predefined.booleanId.setType(Predefined.booleanType)
 
         # Type char.
-        charId = symTableStack.enterLocal("char", TYPE)
-        charType = Typespec(SCALAR)
-        charType.setIdentifier(charId)
-        charId.setType(charType)
+        Predefined.charId = symTableStack.enterLocal("char", Kind.TYPE)
+        Predefined.charType = Typespec(Form.SCALAR)
+        Predefined.charType.setIdentifier(Predefined.charId)
+        Predefined.charId.setType(Predefined.charType)
 
         # Type string.
-        stringId = symTableStack.enterLocal("string", TYPE)
-        stringType = Typespec(SCALAR)
-        stringType.setIdentifier(stringId)
-        stringId.setType(stringType)
+        Predefined.stringId = symTableStack.enterLocal("string", Kind.TYPE)
+        Predefined.stringType = Typespec(Form.SCALAR)
+        Predefined.stringType.setIdentifier(Predefined.stringId)
+        Predefined.stringId.setType(Predefined.stringType)
 
         # Undefined type.
-        undefinedType = Typespec(SCALAR)
+        undefinedType = Typespec(Form.SCALAR)
 
     # Initialize the predefined constant.
     #
@@ -112,46 +103,46 @@ class Predefined:
     @staticmethod
     def initializeConstants(symTabStack):
         # Boolean enumeration constant false.
-        falseId = symTabStack.enterLocal("false", ENUMERATION_CONSTANT)
-        falseId.setType(booleanType)
-        falseId.setValue(0)
+        Predefined.falseId = symTabStack.enterLocal("false", Kind.ENUMERATION_CONSTANT)
+        Predefined.falseId.setType(Predefined.booleanType)
+        Predefined.falseId.setValue(0)
 
         # Boolean enumeration constant true.
-        trueId = symTabStack.enterLocal("true", ENUMERATION_CONSTANT)
-        trueId.setType(booleanType)
-        trueId.setValue(1)
+        Predefined.trueId = symTabStack.enterLocal("true", Kind.ENUMERATION_CONSTANT)
+        Predefined.trueId.setType(Predefined.booleanType)
+        Predefined.trueId.setValue(1)
 
         # Add false and true to the boolean enumeration type.
-        constants = booleanType.getEnumerationConstants()
-        constants.add(falseId)
-        constants.add(trueId)
+        constants = Predefined.booleanType.getEnumerationConstants()
+        constants.add(Predefined.falseId)
+        constants.add(Predefined.trueId)
 
     # Initialize the standard procedures and functions.
     #
     # @param symTableStack the symbol table stack to initialize.
     @staticmethod
     def initializeStandardRoutines(symTableStack):
-        readId = Predefined.enterStandard(symTableStack, PROCEDURE, "read", READ)
-        readlnId = Predefined.enterStandard(symTableStack, PROCEDURE, "readln", READLN)
-        writeId = Predefined.enterStandard(symTableStack, PROCEDURE, "write", WRITE)
-        writelnId = Predefined.enterStandard(symTableStack, PROCEDURE, "writeln", WRITELN)
-        absId = Predefined.enterStandard(symTableStack, FUNCTION, "abs", ABS)
-        arctanId = Predefined.enterStandard(symTableStack, FUNCTION, "arctan", ARCTAN)
-        chrId = Predefined.enterStandard(symTableStack, FUNCTION, "chr", CHR)
-        cosId = Predefined.enterStandard(symTableStack, FUNCTION, "cos", COS)
-        eofId = Predefined.enterStandard(symTableStack, FUNCTION, "eof", EOF)
-        eolnId = Predefined.enterStandard(symTableStack, FUNCTION, "eoln", EOLN)
-        expId = Predefined.enterStandard(symTableStack, FUNCTION, "exp", EXP)
-        lnId = Predefined.enterStandard(symTableStack, FUNCTION, "ln", LN)
-        oddId = Predefined.enterStandard(symTableStack, FUNCTION, "odd", ODD)
-        ordId = Predefined.enterStandard(symTableStack, FUNCTION, "ord", ORD)
-        predId = Predefined.enterStandard(symTableStack, FUNCTION, "pred", PRED)
-        roundId = Predefined.enterStandard(symTableStack, FUNCTION, "round", ROUND)
-        sinId = Predefined.enterStandard(symTableStack, FUNCTION, "sin", SIN)
-        sqrId = Predefined.enterStandard(symTableStack, FUNCTION, "sqr", SQR)
-        sqrtId = Predefined.enterStandard(symTableStack, FUNCTION, "sqrt", SQRT)
-        succId = Predefined.enterStandard(symTableStack, FUNCTION, "succ", SUCC)
-        truncId = Predefined.enterStandard(symTableStack, FUNCTION, "trunc", TRUNC)
+        Predefined.readId = Predefined.enterStandard(symTableStack, Kind.PROCEDURE, "read", Routine.READ)
+        Predefined.readlnId = Predefined.enterStandard(symTableStack, Kind.PROCEDURE, "readln", Routine.READLN)
+        Predefined.writeId = Predefined.enterStandard(symTableStack, Kind.PROCEDURE, "write", Routine.WRITE)
+        Predefined.writelnId = Predefined.enterStandard(symTableStack, Kind.PROCEDURE, "writeln", Routine.WRITELN)
+        Predefined.absId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "abs", Routine.ABS)
+        Predefined.arctanId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "arctan", Routine.ARCTAN)
+        Predefined.chrId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "chr", Routine.CHR)
+        Predefined.cosId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "cos", Routine.COS)
+        Predefined.eofId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "eof", Routine.EOF)
+        Predefined.eolnId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "eoln", Routine.EOLN)
+        Predefined.expId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "exp", Routine.EXP)
+        Predefined.lnId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "ln", Routine.LN)
+        Predefined.oddId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "odd", Routine.ODD)
+        Predefined.ordId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "ord", Routine.ORD)
+        Predefined.predId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "pred", Routine.PRED)
+        Predefined.roundId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "round", Routine.ROUND)
+        Predefined.sinId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "sin", Routine.SIN)
+        Predefined.sqrId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "sqr", Routine.SQR)
+        Predefined.sqrtId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "sqrt", Routine.SQRT)
+        Predefined.succId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "succ", Routine.SUCC)
+        Predefined.truncId = Predefined.enterStandard(symTableStack, Kind.FUNCTION, "trunc", Routine.TRUNC)
 
     # Enter a standard procedure or function into the symbol table stack.
     #
