@@ -1,0 +1,17 @@
+program SimpleScript;
+
+DO {
+
+	//test array
+	println(numbers);
+
+
+	// test boolean:
+
+	if not b is true do {
+		println('b is false');
+	}
+	else do {
+		println('b is true');
+	}
+}
