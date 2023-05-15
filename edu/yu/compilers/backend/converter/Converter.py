@@ -2,6 +2,7 @@
 
 # import antlr4.PascalBaseVisitor;
 # import antlr4.PascalParser;
+# import antlr4.PascalParser.CaseConstantContext;
 # import edu.yu.compilers.intermediate.symtable.Predefined;
 # import edu.yu.compilers.intermediate.symtable.SymTable;
 # import edu.yu.compilers.intermediate.symtable.SymTableEntry;
@@ -15,223 +16,282 @@
 # import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*;
 # import static edu.yu.compilers.intermediate.type.Typespec.Form.*;
 
-# /**
-#  * Convert Pascal programs to Java.
-#  */
-# public class Converter extends PascalBaseVisitor<Object> {
-#     // Map a Pascal datatype name to the Java datatype name.
-#     private static final Hashtable<String, String> typeNameTable;
+# Convert Pascal programs to Java.
+class Converter(PascalBaseVisitor):
 
-#     static {
-#         typeNameTable = new Hashtable<>();
-#         typeNameTable.put("integer", "int");
-#         typeNameTable.put("real", "double");
-#         typeNameTable.put("boolean", "boolean");
-#         typeNameTable.put("char", "char");
-#         typeNameTable.put("string", "String");
-#     }
+    # Map a Pascal datatype name to the Java datatype name.
+    type_name_table = {
+        "integer": "int",
+        "real": "double",
+        "boolean": "boolean",
+        "char": "char",
+        "string": "String",
+    }
 
-#     private CodeGenerator code;
+    def __init__(self):
+        self.code = None
+        self.program_name = None
+        self.program_variables = True
+        self.record_fields = False
+        self.current_separator = ""
 
-#     private String programName;
+    def get_program_name(self):
+        return self.program_name
 
-#     private boolean programVariables = true;
-#     private boolean recordFields = false;
-#     private String currentSeparator = "";
+    def visitRoutineDefinition(self, ctx):
+        return None
 
-#     public String getProgramName() {
-#         return programName;
-#     }
+    def visit_case_statement(self, ctx):
+        var_name = self.visit(ctx.expression())
+        self.code.emit_line(f"switch ({var_name}) {{")
+        self.code.indent()
 
-#     @Override
-#     public Object visitProgram(PascalParser.ProgramContext ctx) {
-#         StringWriter sw = new StringWriter();
-#         code = new CodeGenerator(new PrintWriter(sw));
+        for branch in ctx.caseBranchList().caseBranch():
+            if branch.caseConstantList() is None:
+                continue
 
-#         visit(ctx.programHeader());
+            self.code.emit_start("case ")
+            obj1 = branch.caseConstantList().caseConstant(0)
+            str1 = obj1.getText()
+            if obj1.type == Predefined.stringType:
+                str1 = "\"" + self.convert_string(str1) + "\""
+            self.code.emit(str1)
 
-#         // Execution timer and runtime standard input.
-#         code.indent();
-#         code.emitLine("private static java.util.Scanner _sysin = " +
-#                 "new java.util.Scanner(System.in);");
-#         code.emitLine();
+            for i in range(1, len(branch.caseConstantList().caseConstant())):
+                if branch.caseConstantList() is None:
+                    continue
 
-#         // Level 1 declarations.
-#         PascalParser.ProgramIdentifierContext idCtx =
-#                 ctx.programHeader().programIdentifier();
-#         visit(ctx.block().declarations());
-#         emitUnnamedRecordDefinitions(idCtx.entry.getRoutineSymTable());
+                obj2 = branch.caseConstantList().caseConstant(i)
+                str2 = obj2.getText()
+                if obj2.type == Predefined.stringType:
+                    str2 = "\"" + self.convert_string(str2) + "\""
+                self.code.emit(", " + str2)
 
-#         // Main.
-#         code.emitLine();
-#         code.emitLine("public static void main(String[] args)");
-#         code.emitLine("{");
-#         code.indent();
+            self.code.emit_line(":")
+            self.visit(branch.statement())
+            self.code.emit_line("break;")
 
-#         // Allocate structured data.
-#         emitAllocateStructuredVariables("", idCtx.entry.getRoutineSymTable());
-#         code.emitLine();
+        self.code.dedent()
+        self.code.emit_line("}")
 
-#         // Main compound statement.
-#         visit(ctx.block().compoundStatement().statementList());
+        return None
 
-#         code.dedent();
-#         code.emitLine("}");
+    def visitForStatement(self, ctx):
+        self.code.emitStart("for (")
+        varName = ctx.variable().getText()
+        self.code.emit(f"int {varName} = ")
+        self.code.emit(visit(ctx.expression(0)).toString())
+        self.code.emit("; ")
 
-#         code.dedent();
-#         code.emitLine("}");
+        self.code.emitStart(varName)
 
-#         code.close();
-#         return sw.toString();
-#     }
+        upto = ctx.TO() != None
+        if upto:
+            self.code.emit(" <= ")
+        else:
+            self.code.emit(" >= ")
 
-#     @Override
-#     public Object visitProgramHeader(PascalParser.ProgramHeaderContext ctx) {
-#         programName = ctx.programIdentifier().entry.getName();
+        self.code.emit(visit(ctx.expression(1)).toString())
+        self.code.emit("; ")
 
-#         // Emit the Java program class.
-#         code.emitLine("public class " + programName);
-#         code.emitLine("{");
+        self.code.emitStart(varName)
 
-#         return null;
-#     }
+        if upto:
+            self.code.emitEnd("++)")
+        else:
+            self.code.emitEnd("--)")
 
-#     @Override
-#     public Object visitConstantDefinition(
-#             PascalParser.ConstantDefinitionContext ctx) {
-#         PascalParser.ConstantIdentifierContext idCtx = ctx.constantIdentifier();
-#         PascalParser.ConstantContext constCtx = ctx.constant();
-#         String constantName = idCtx.entry.getName();
-#         Typespec type = constCtx.type;
-#         String pascalTypeName = type.getIdentifier().getName();
-#         String javaTypeName = typeNameTable.get(pascalTypeName);
+        self.code.emitLine("{")
+        self.code.indent()
+        self.visit(ctx.statement())
+        self.code.dedent()
+        self.code.emitLine("}")
 
-#         code.emitStart();
-#         if (programVariables) code.emit("private static ");
-#         code.emitEnd("final " + javaTypeName + " " + constantName + " = "
-#                 + constCtx.getText() + ";");
+        return None
 
-#         return null;
-#     }
+    def visitIfStatement(self, ctx):
+        self.code.emitLine(f"if ({self.visit(ctx.expression())})")
+        self.code.emitLine("{")
+        self.code.indent()
+        self.visit(ctx.trueStatement())
+        self.code.dedent()
+        self.code.emitLine("}")
 
-#     @Override
-#     public Object visitTypeDefinition(PascalParser.TypeDefinitionContext ctx) {
-#         PascalParser.TypeIdentifierContext idCtx = ctx.typeIdentifier();
-#         String typeName = idCtx.entry.getName();
-#         PascalParser.TypeSpecificationContext typeCtx = ctx.typeSpecification();
-#         Form form = typeCtx.type.getForm();
+        if ctx.ELSE() is not None:
+            self.code.emitLine("else")
+            self.code.emitLine("{")
+            self.code.indent()
+            self.visit(ctx.falseStatement())
+            self.code.dedent()
+            self.code.emitLine("}")
 
-#         if (form == ENUMERATION) {
-#             code.emitStart();
-#             if (programVariables) code.emit("private static ");
-#             code.emit("enum " + typeName);
-#             visit(typeCtx);
-#         } else if (form == RECORD) {
-#             code.emitStart();
-#             if (programVariables) code.emit("public static ");
-#             code.emitEnd("class " + typeName);
-#             code.emitLine("{");
-#             code.indent();
+        return None
 
-#             emitUnnamedRecordDefinitions(typeCtx.type.getRecordSymTable());
-#             visit(typeCtx);
 
-#             code.dedent();
-#             code.emitLine("}");
-#             code.emitLine();
-#         }
+    def visitWhileStatement(self, ctx):
+        self.code.emitLine(f"while ({ctx.expression().getText()})")
+        self.code.emitLine("{")
+        self.code.indent()
+        self.visit(ctx.statement())
+        self.code.dedent()
+        self.code.emitLine("}")
 
-#         return null;
-#     }
+        return None
 
-#     @Override
-#     public Object visitEnumerationTypespec(
-#             PascalParser.EnumerationTypespecContext ctx) {
-#         String separator = " {";
+    def visitProgram(self, ctx):
+        sw = io.StringIO()
+        self.code = CodeGenerator(sw)
 
-#         for (PascalParser.EnumerationConstantContext constCtx :
-#                 ctx.enumerationType().enumerationConstant()) {
-#             code.emit(separator + constCtx.constantIdentifier().entry.getName());
-#             separator = ", ";
-#         }
+        self.visit(ctx.programHeader)
 
-#         code.emitEnd("};");
-#         return null;
-#     }
+        # Execution timer and runtime standard input.
+        self.code.indent()
+        self.code.emitLine("private static java.util.Scanner _sysin = " +
+                            "new java.util.Scanner(System.in);")
+        self.code.emitLine()
 
-#     /**
-#      * Emit a record type definition for an unnamed record.
-#      *
-#      * @param symTable the symbol table that can contain unnamed records.
-#      */
-#     private void emitUnnamedRecordDefinitions(SymTable symTable) {
-#         // Loop to look for names of unnamed record types.
-#         for (SymTableEntry id : symTable.sortedEntries()) {
-#             if ((id.getKind() == TYPE)
-#                     && (id.getType().getForm() == RECORD)
-#                     && (id.getName().startsWith(SymTable.UNNAMED_PREFIX))) {
-#                 code.emitStart();
-#                 if (programVariables) code.emit("public static ");
-#                 code.emitEnd("class " + id.getName());
-#                 code.emitLine("{");
-#                 code.indent();
-#                 emitRecordFields(id.getType().getRecordSymTable());
-#                 code.dedent();
-#                 code.emitLine("}");
-#                 code.emitLine();
-#             }
-#         }
-#     }
+        # Level 1 declarations.
+        idCtx = ctx.programHeader.programIdentifier
+        self.visit(ctx.block.declarations)
+        self.emitUnnamedRecordDefinitions(idCtx.entry.getRoutineSymTable())
 
-#     /**
-#      * Emit the record fields of a record.
-#      *
-#      * @param symTable the symbol table of the unnamed record.
-#      */
-#     private void emitRecordFields(SymTable symTable) {
-#         emitUnnamedRecordDefinitions(symTable);
+        # Main.
+        self.code.emitLine()
+        self.code.emitLine("public static void main(String[] args)")
+        self.code.emitLine("{")
+        self.code.indent()
 
-#         // Loop over the entries of the symbol table.
-#         for (SymTableEntry fieldId : symTable.sortedEntries()) {
-#             if (fieldId.getKind() == RECORD_FIELD) {
-#                 code.emitStart(typeName(fieldId.getType()));
-#                 code.emit(" " + fieldId.getName());
-#                 code.emitEnd(";");
-#             }
-#         }
-#     }
+        # Allocate structured data.
+        self.emitAllocateStructuredVariables("", idCtx.entry.getRoutineSymTable())
+        self.code.emitLine()
 
-#     @Override
-#     public Object visitRecordTypespec(PascalParser.RecordTypespecContext ctx) {
-#         PascalParser.RecordFieldsContext fieldsCtx =
-#                 ctx.recordType().recordFields();
-#         recordFields = true;
-#         visit(fieldsCtx.variableDeclarationsList());
-#         recordFields = false;
+        # Main compound statement.
+        self.visit(ctx.block.compoundStatement.statementList)
 
-#         return null;
-#     }
+        self.code.dedent()
+        self.code.emitLine("}")
 
-#     @Override
-#     public Object visitVariableDeclarations(
-#             PascalParser.VariableDeclarationsContext ctx) {
-#         PascalParser.TypeSpecificationContext typeCtx = ctx.typeSpecification();
-#         PascalParser.VariableIdentifierListContext listCtx =
-#                 ctx.variableIdentifierList();
+        self.code.dedent()
+        self.code.emitLine("}")
 
-#         for (PascalParser.VariableIdentifierContext varCtx :
-#                 listCtx.variableIdentifier()) {
-#             code.emitStart();
-#             if (programVariables && !recordFields) code.emit("private static ");
-#             code.emit(typeName(typeCtx.type));
+        self.code.close()
+        return sw.getvalue()
 
-#             code.emit(" " + varCtx.entry.getName());
-#             if (typeCtx.type.getForm() == ARRAY) emitArraySpecifier(typeCtx.type);
-#             code.emitEnd(";");
-#         }
+    def visitProgramHeader(self, ctx):
+        programName = ctx.programIdentifier().entry.getName()
 
-#         return null;
-#     }
+        # Emit the Python program class.
+        self.code.emitLine(f"class {programName}:")
+        self.code.indent()
+
+        return None
+
+    def visitConstantDefinition(self, ctx):
+        idCtx = ctx.constantIdentifier()
+        constCtx = ctx.constant()
+        constantName = idCtx.entry.getName()
+        type = constCtx.type
+        pascalTypeName = type.getIdentifier().getName()
+        javaTypeName = self.typeNameTable[pascalTypeName]
+
+        self.code.emitStart()
+
+        if self.programVariables:
+            self.code.emit("global ")
+        self.code.emitEnd(f"{constantName} = {constCtx.getText()}")
+
+        # Java version:
+        # if self.programVariables:
+        #     self.code.emit("private static ")
+        # self.code.emitEnd("final " + javaTypeName + " " + constantName + " = " + constCtx.getText() + ";")
+
+        return None
+
+    def visitTypeDefinition(self, ctx):
+        idCtx = ctx.typeIdentifier()
+        typeName = idCtx.entry.getName()
+        typeCtx = ctx.typeSpecification()
+        form = typeCtx.type.getForm()
+
+        if form == ENUMERATION:
+            self.code.emitStart()
+            if self.programVariables:
+                self.code.emit("private static ")
+            self.code.emit("enum " + typeName)
+            self.visit(typeCtx)
+        elif form == RECORD:
+            self.code.emitStart()
+            if self.programVariables:
+                self.code.emit("public static ")
+            self.code.emitEnd("class " + typeName)
+            self.code.emitLine("{")
+            self.code.indent()
+
+            self.emitUnnamedRecordDefinitions(typeCtx.type.getRecordSymTable())
+            self.visit(typeCtx)
+
+            self.code.dedent()
+            self.code.emitLine("}")
+            self.code.emitLine()
+
+        return None
+
+    def visitEnumerationTypespec(self, ctx):
+        separator = " {"
+
+        for constCtx in ctx.enumerationType().enumerationConstant():
+            self.code.emit(separator + constCtx.constantIdentifier().entry.getName())
+            separator = ", "
+
+        self.code.emitEnd("};")
+        return None
+
+    def emitUnnamedRecordDefinitions(symTable):
+        for id in symTable.sortedEntries():
+            if (id.getKind() == TYPE) and (id.getType().getForm() == RECORD) and (id.getName().startswith(SymTable.UNNAMED_PREFIX)):
+                code.emitStart()
+                if programVariables:
+                    code.emit("public static ")
+                code.emitEnd("class " + id.getName())
+                code.emitLine("{")
+                code.indent()
+                emitRecordFields(id.getType().getRecordSymTable())
+                code.dedent()
+                code.emitLine("}")
+                code.emitLine()
+
+
+    def emitRecordFields(symTable):
+        emitUnnamedRecordDefinitions(symTable)
+
+        for fieldId in symTable.sortedEntries():
+            if fieldId.getKind() == RECORD_FIELD:
+                code.emitStart(typeName(fieldId.getType()))
+                code.emit(" " + fieldId.getName())
+                code.emitEnd(";")
+
+    def visitRecordTypespec(self, ctx):
+        fieldsCtx = ctx.recordType().recordFields()
+        self.recordFields = True
+        self.visit(fieldsCtx.variableDeclarationsList())
+        self.recordFields = False
+        return None
+
+    def visitVariableDeclarations(self, ctx):
+        typeCtx = ctx.typeSpecification()
+        listCtx = ctx.variableIdentifierList()
+
+        for varCtx in listCtx.variableIdentifier():
+            self.code.emitStart()
+            if self.programVariables and not self.recordFields:
+                self.code.emit("private static ")
+            self.code.emit(typeName(typeCtx.type))
+            self.code.emit(" " + varCtx.entry.getName())
+            if typeCtx.type.getForm() == ARRAY:
+                self.emitArraySpecifier(typeCtx.type)
+            self.code.emitEnd(";")
+
+        return None
 
 #     /**
 #      * Emit a pair of empty brackets for each dimension.

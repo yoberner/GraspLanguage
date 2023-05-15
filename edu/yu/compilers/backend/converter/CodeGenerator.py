@@ -45,6 +45,7 @@ class CodeGenerator:
         self.position = 0
         self.need_lf = False
 
+    # ? can you method overload here ?
     def emit_line_with_code(self, code):
         self.lf_if_needed()
         self.object_file.write(self.indentation + code + '\n')
@@ -60,6 +61,7 @@ class CodeGenerator:
         self.position = 0
         self.need_lf = False
 
+    # ? change to our language?
     def emit_comment_line(self, text):
         self.emit_line_with_code('// ' + text)
         self.need_lf = False
