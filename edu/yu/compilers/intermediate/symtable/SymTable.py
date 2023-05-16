@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from edu.yu.compilers.intermediate.symtable.Kind import Kind
 from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
+from sortedcontainers import SortedDict
 
 
 # import edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind;
@@ -15,7 +16,7 @@ from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 # import java.util.TreeMap;
 # import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.VARIABLE;
 
-class SymTable(OrderedDict):
+class SymTable(SortedDict):
     UNNAMED_PREFIX = "_unnamed_"
     serialVersionUID = 0  # will convert to long automatically when needed via python
     unnamedIndex = 0
@@ -68,6 +69,7 @@ class SymTable(OrderedDict):
     # @return the new entry.
     def enter(self, name, kind):
         entry = SymTableEntry(name, kind, self)
+        # self[name] = entry  # these put and get methods should work
         super().__setitem__(name, entry)
         return entry
 
@@ -75,7 +77,7 @@ class SymTable(OrderedDict):
     #     @param name the name of the entry.
     # @return the entry, or null if it does not exist.
     def lookup(self, name):
-        return super().__getitem__(name)
+        return super().get(name)  # these put and get methods should work
 
     # Return an arraylist of entries sorted by name.
     # @return the sorted arraylist.

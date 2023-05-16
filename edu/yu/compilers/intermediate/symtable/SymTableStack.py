@@ -60,16 +60,16 @@ class SymTableStack(list):
         foundEntry = None
 
         # Search the current and enclosing scopes.
-        i = self.currentNestingLevel
-        while (i >= 0) and (foundEntry is None):
-            foundEntry = self[i].lookup(name)
-            i += 1
-            # it also added a break statement
-
-        # ChatGPT's loop - very nice
-        # for i in range(self.currentNestingLevel, -1, -1):
+        # i = self.currentNestingLevel
+        # while (i >= 0) and (foundEntry is None):
         #     foundEntry = self[i].lookup(name)
-        #     if foundEntry:
-        #         break
+        #     i += 1
+        #     # it also added a break statement
+        # NO WAAY CRAZY
+        # ChatGPT's loop - very nice
+        for i in range(self.currentNestingLevel, -1, -1):
+            foundEntry = self[i].lookup(name)
+            if foundEntry:
+                break
 
         return foundEntry

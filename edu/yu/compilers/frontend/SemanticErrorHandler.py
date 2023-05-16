@@ -1,5 +1,8 @@
 from enum import Enum
+from multipledispatch import dispatch
 from antlr4 import ParserRuleContext
+
+from GraspParser import GraspParser
 
 
 class SemanticErrorHandler:
@@ -36,6 +39,7 @@ class SemanticErrorHandler:
     def get_count(self):
         return self.count
 
+    @dispatch(Code, int, str)
     def flag(self, code, lineNumber, text):
         if self.count == 0:
             print("\n===== SEMANTIC ERRORS =====\n")
@@ -46,5 +50,6 @@ class SemanticErrorHandler:
 
         print("{:03d}  {:<40} \"{}\"".format(lineNumber, code.message, text))
 
+    @dispatch(Code, ParserRuleContext)
     def flag(self, code, ctx):
-        self.flag(code, ctx.getStart().getLine(), ctx.getText())
+        self.flag(code, ctx.start.line, ctx.getText())

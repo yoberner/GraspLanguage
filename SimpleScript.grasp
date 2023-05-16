@@ -2,10 +2,8 @@ program SimpleScript;
 
 DO {
 
-    int i = 1
-
 	// test array
-	PRINTLN(1)
+	PRINTLN('hi');
 
 
 	// test boolean:
