@@ -1,7 +1,7 @@
 from edu.yu.compilers.intermediate.symtable.Kind import Kind
+from edu.yu.compilers.intermediate.symtable.Routine import Routine
 from edu.yu.compilers.intermediate.type.Form import Form
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
-from Routine import Routine
 from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 
 
@@ -67,31 +67,31 @@ class Predefined:
         # Type integer.
         Predefined.integerId = symTableStack.enterLocal("integer", Kind.TYPE)
         Predefined.integerType = Typespec(Form.SCALAR)
-        Predefined.integerType.setIdentifier(Predefined.integerId);
+        Predefined.integerType.setIdentifier(Predefined.integerId.getName(), Predefined.integerId.getSymTable())
         Predefined.integerId.setType(Predefined.integerType)
 
         # // Type real.
         Predefined.realId = symTableStack.enterLocal("real", Kind.TYPE)
         Predefined.realType = Typespec(Form.SCALAR)
-        Predefined.realType.setIdentifier(Predefined.realId)
+        Predefined.realType.setIdentifier(Predefined.realId.getName(), Predefined.realId.getSymTable())
         Predefined.realId.setType(Predefined.realType)
 
         # Type boolean.
         Predefined.booleanId = symTableStack.enterLocal("boolean", Kind.TYPE)
         Predefined.booleanType = Typespec(Form.ENUMERATION)
-        Predefined.booleanType.setIdentifier(Predefined.booleanId)
+        Predefined.booleanType.setIdentifier(Predefined.booleanId.getName(), Predefined.booleanId.getSymTable())
         Predefined.booleanId.setType(Predefined.booleanType)
 
         # Type char.
         Predefined.charId = symTableStack.enterLocal("char", Kind.TYPE)
         Predefined.charType = Typespec(Form.SCALAR)
-        Predefined.charType.setIdentifier(Predefined.charId)
+        Predefined.charType.setIdentifier(Predefined.charId.getName(), Predefined.charId.getSymTable())
         Predefined.charId.setType(Predefined.charType)
 
         # Type string.
         Predefined.stringId = symTableStack.enterLocal("string", Kind.TYPE)
         Predefined.stringType = Typespec(Form.SCALAR)
-        Predefined.stringType.setIdentifier(Predefined.stringId)
+        Predefined.stringType.setIdentifier(Predefined.stringId.getName(), Predefined.stringId.getSymTable())
         Predefined.stringId.setType(Predefined.stringType)
 
         # Undefined type.
@@ -114,8 +114,8 @@ class Predefined:
 
         # Add false and true to the boolean enumeration type.
         constants = Predefined.booleanType.getEnumerationConstants()
-        constants.add(Predefined.falseId)
-        constants.add(Predefined.trueId)
+        constants.append(Predefined.falseId)
+        constants.append(Predefined.trueId)
 
     # Initialize the standard procedures and functions.
     #

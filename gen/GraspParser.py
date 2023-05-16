@@ -9,6 +9,10 @@ else:
 	from typing.io import TextIO
 
 
+    # package antlr4
+    # import java.util.HashMap
+    # import edu.yu.compilers.intermediate.symtable.SymTableEntry
+    # import edu.yu.compilers.intermediate.type.Typespec
 
 def serializedATN():
     return [
@@ -656,7 +660,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.entry = null
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -986,8 +990,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -1027,8 +1031,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.value = null
+            self.type_ = None
+            self.value = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -1315,8 +1319,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -1356,7 +1360,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
 
         def getRuleIndex(self):
@@ -1466,7 +1470,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
 
         def getRuleIndex(self):
@@ -1590,7 +1594,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.entry = null
+            self.entry = None
 
         def BLUEPRINT(self):
             return self.getToken(GraspParser.BLUEPRINT, 0)
@@ -1898,8 +1902,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -2110,8 +2114,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -2309,8 +2313,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -2824,7 +2828,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
         def variable(self):
             return self.getTypedRuleContext(GraspParser.VariableContext,0)
@@ -3068,7 +3072,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.jumpTable = null
+            self.jumpTable = None
 
         def IF(self):
             return self.getToken(GraspParser.IF, 0)
@@ -3306,8 +3310,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.value = null
+            self.type_ = None
+            self.value = None
 
         def constant(self):
             return self.getTypedRuleContext(GraspParser.ConstantContext,0)
@@ -4150,7 +4154,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
         def simpleExpression(self, i:int=None):
             if i is None:
@@ -4209,7 +4213,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
         def term(self, i:int=None):
             if i is None:
@@ -4285,7 +4289,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
         def factor(self, i:int=None):
             if i is None:
@@ -4349,7 +4353,7 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
+            self.type_ = None
 
 
         def getRuleIndex(self):
@@ -4563,8 +4567,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def variableIdentifier(self):
             return self.getTypedRuleContext(GraspParser.VariableIdentifierContext,0)
@@ -4782,8 +4786,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)
@@ -4880,8 +4884,8 @@ class GraspParser ( Parser ):
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
             self.parser = parser
-            self.type_ = null
-            self.entry = null
+            self.type_ = None
+            self.entry = None
 
         def IDENTIFIER(self):
             return self.getToken(GraspParser.IDENTIFIER, 0)

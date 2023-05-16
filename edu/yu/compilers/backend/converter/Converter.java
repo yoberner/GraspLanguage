@@ -103,7 +103,7 @@ public class Converter extends PascalBaseVisitor<Object> {
         PascalParser.ConstantContext constCtx = ctx.constant();
         String constantName = idCtx.entry.getName();
         Typespec type = constCtx.type;
-        String pascalTypeName = type.getIdentifier().getName();
+        pascalTypeName = type.getName() # FIXME NOTE I CHANGED THIS AND THIS LINE SHOULD LOOK EXACTLY AS IT IS WHEN RESOLVING MERGE CONFLICT
         String javaTypeName = typeNameTable.get(pascalTypeName);
 
         code.emitStart();
@@ -255,19 +255,18 @@ public class Converter extends PascalBaseVisitor<Object> {
      * @param pascalType the datatype name.
      * @return the Java type name.
      */
-    private String typeName(Typespec pascalType) {
-        Form form = pascalType.getForm();
-        SymTableEntry typeId = pascalType.getIdentifier();
-        String pascalTypeName = typeId != null ? typeId.getName() : null;
+    def typeName(self, graspType) :
+        form = pascalType.getForm()
+        String pascalTypeName = graspType.getName() # FIXME NOTE I CHANGED The top of this function AND it SHOULD go by mine EXACTLY WHEN RESOLVING MERGE CONFLICT
 
         if (form == ARRAY) {
             Typespec elemType = pascalType.getArrayBaseType();
-            pascalTypeName = elemType.getIdentifier().getName();
+            graspTypeName = elemType.getName() # FIXME NOTE ALSO THESE LINES should stay by my version when resolving the conflicts
             String javaTypeName = typeNameTable.get(pascalTypeName);
             return javaTypeName != null ? javaTypeName : pascalTypeName;
         } else if (form == SUBRANGE) {
             Typespec baseType = pascalType.baseType();
-            pascalTypeName = baseType.getIdentifier().getName();
+            graspTypeName = baseType.getName() # FIXME NOTE ALSO THESE LINES should stay by my version when resolving the conflicts
             return typeNameTable.get(pascalTypeName);
         } else if (form == ENUMERATION) {
             return pascalTypeName != null ? pascalTypeName : "int";
@@ -357,7 +356,7 @@ public class Converter extends PascalBaseVisitor<Object> {
         }
 
         type = type.baseType();
-        String pascalTypeName = type.getIdentifier().getName();
+        graspTypeName = type.getName() # FIXME ALSO THIS LINE GO WITH MY VERSION!!!
         String javaTypeName = typeNameTable.get(pascalTypeName);
 
         if (javaTypeName == null) javaTypeName = pascalTypeName;
@@ -394,7 +393,7 @@ public class Converter extends PascalBaseVisitor<Object> {
         } while (elemType.getForm() == ARRAY);
         variableName = variableNameBuilder.toString();
 
-        String typeName = elemType.getIdentifier().getName();
+        typeName = elemType.getName() # FIXME ALSO THIS LINE GO WITH MY VERSION!!!
         code.emitStart(lhsPrefix + variableName + " = new " + typeName + "()");
         code.emitEnd(";");
 
@@ -627,7 +626,7 @@ public class Converter extends PascalBaseVisitor<Object> {
 
         if ((type != Predefined.booleanType)
                 && (variableId.getKind() == ENUMERATION_CONSTANT)) {
-            variableName.insert(0, type.getIdentifier().getName() + ".");
+            variableName.insert(0, type.getName() + ".") # FIXME ALSO THIS LINE GO WITH MY VERSION!!! (BUT YOU MAY NEED TO CHANGE INSERT())
         }
 
         // Loop over any subscript and field modifiers.

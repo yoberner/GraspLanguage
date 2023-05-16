@@ -28,12 +28,13 @@ from antlr4 import FileStream, InputStream, CommonTokenStream
 # import edu.yu.compilers.intermediate.util.BackendMode
 
 def main(args):
-    if args.length != 2:
+    if len(args) != 3:
+        print(args)
         print("USAGE: pascalCC {-execute|-convert|-compile} sourceFileName")
         return
 
-    option = args[0]
-    source_file_name = args[1]
+    option = args[1]
+    source_file_name = args[2]
 
     mode = BackendMode.EXECUTOR  # FIXME
 

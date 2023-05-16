@@ -1,17 +1,17 @@
 grammar Grasp;
 
 @header {
-    // package antlr4;
-    // import java.util.HashMap;
-    // import edu.yu.compilers.intermediate.symtable.SymTableEntry;
-    // import edu.yu.compilers.intermediate.type.Typespec;
+    # package antlr4
+    # import java.util.HashMap
+    # import edu.yu.compilers.intermediate.symtable.SymTableEntry
+    # import edu.yu.compilers.intermediate.type.Typespec
 }
 
 program           : programHeader block ;
 programHeader     : PROGRAM programIdentifier programParameters? ';' ; 
 programParameters : '(' IDENTIFIER ( ',' IDENTIFIER )* ')' ;
 
-programIdentifier   locals [ SymTableEntry entry = null ]
+programIdentifier   locals [ SymTableEntry entry = None ]
     : IDENTIFIER ;
 
 block         : declarations compoundStatement ;
@@ -22,10 +22,10 @@ constantsPart           : FINAL '{' constantDefinitionsList '}' ;
 constantDefinitionsList : constantDefinition ';' ( constantDefinition ';' )* ;
 constantDefinition      : typeSpecification constantIdentifier '=' constant ;
 
-constantIdentifier  locals [ Typespec type = null, SymTableEntry entry = null ]
+constantIdentifier  locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
-constant            locals [ Typespec type = null, Object value = null ]
+constant            locals [ Typespec type = None, Object value = None ]
     : sign? ( IDENTIFIER | unsignedNumber )
     | characterConstant
     | stringConstant
@@ -37,23 +37,23 @@ typesPart           : TYPE '{' typeDefinitionsList '}' ;
 typeDefinitionsList : typeDefinition* ;
 typeDefinition      : typeIdentifier '=' typeSpecification ;
 
-typeIdentifier      locals [ Typespec type = null, SymTableEntry entry = null ]
+typeIdentifier      locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
-typeSpecification   locals [ Typespec type = null ]
+typeSpecification   locals [ Typespec type = None ]
     : simpleType        # simpleTypespec
     | arrayType         # arrayTypespec
     | recordType        # recordTypespec
     ;
 
-simpleType          locals [ Typespec type = null ]
+simpleType          locals [ Typespec type = None ]
     : typeIdentifier    # typeIdentifierTypespec
     ;
 
 arrayType
     : (simpleType | recordType ) ('['']')* ;
 
-recordType          locals [ SymTableEntry entry = null ]
+recordType          locals [ SymTableEntry entry = None ]
     : BLUEPRINT '{' recordFields ';'? '}' ;
 recordFields : variableDeclarationsList ;
 
@@ -62,14 +62,14 @@ variableDeclarationsList : variableDeclarations ';' ( variableDeclarations ';')*
 variableDeclarations     : typeSpecification variableIdentifierList;
 variableIdentifierList   : variableIdentifier ( ',' variableIdentifier )* ;
 
-variableIdentifier  locals [ Typespec type = null, SymTableEntry entry = null ]
+variableIdentifier  locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
 routinesPart      : routineDefinition ( ';' routineDefinition)* ;
 routineDefinition : ( functionHead ) block ;
 functionHead      : FUNCTION  routineIdentifier parameters? RETURNS typeIdentifier ;
 
-routineIdentifier   locals [ Typespec type = null, SymTableEntry entry = null ]
+routineIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
 parameters                : '(' parameterDeclarationsList ')' ;
@@ -77,7 +77,7 @@ parameterDeclarationsList : parameterDeclarations ( ',' parameterDeclarations )*
 parameterDeclarations     : VAR? typeIdentifier parameterIdentifier ;
 
 
-parameterIdentifier   locals [ Typespec type = null, SymTableEntry entry = null ]
+parameterIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
 statement : compoundStatement
@@ -104,7 +104,7 @@ assignmentStatement : lhs '=' rhs ;
 
 returnStatement : RETURN expression ;
 
-lhs locals [ Typespec type = null ]
+lhs locals [ Typespec type = None ]
     : variable ;
 rhs : expression ;
 
@@ -113,14 +113,14 @@ trueStatement  : statement ;
 falseStatement : statement ;
 
 caseStatement
-    locals [ HashMap<Object, PascalParser.StatementContext> jumpTable = null ]
+    locals [ HashMap<Object, PascalParser.StatementContext> jumpTable = None ]
     : IF expression caseBranchList (DEFAULT DO statement)? ;
 
 caseBranchList   : caseBranch* ;
 caseBranch       : IS caseConstantList DO statement ;
 caseConstantList : caseConstant ( ',' caseConstant )* ;
 
-caseConstant    locals [ Typespec type = null, Object value = null ]
+caseConstant    locals [ Typespec type = None, Object value = None ]
     : constant ;
 
 whileStatement  : WHILE expression IS TRUE KEEP DOING statement ;
@@ -143,16 +143,16 @@ readStatement   : READ readArguments ;
 readlnStatement : READLN readArguments ;
 readArguments   : '(' variable ( ',' variable )* ')' ;
 
-expression          locals [ Typespec type = null ] 
+expression          locals [ Typespec type = None ] 
     : simpleExpression (relOp simpleExpression)? ;
     
-simpleExpression    locals [ Typespec type = null ] 
+simpleExpression    locals [ Typespec type = None ] 
     : sign? term (addOp term)* ;
     
-term                locals [ Typespec type = null ]
+term                locals [ Typespec type = None ]
     : factor (mulOp factor)* ;
 
-factor              locals [ Typespec type = null ] 
+factor              locals [ Typespec type = None ] 
     : variable             # variableFactor
     | number               # numberFactor
     | characterConstant    # characterFactor
@@ -162,18 +162,18 @@ factor              locals [ Typespec type = null ]
     | '(' expression ')'   # parenthesizedFactor
     ;
 
-variable            locals [ Typespec type = null, SymTableEntry entry = null ] 
+variable            locals [ Typespec type = None, SymTableEntry entry = None ] 
     : variableIdentifier modifier* ;
 
 modifier  : '[' indexList ']' | '.' field ;
 indexList : index ( ',' index )* ;
 index     : expression ; 
 
-field               locals [ Typespec type = null, SymTableEntry entry = null ]     
+field               locals [ Typespec type = None, SymTableEntry entry = None ]     
     : IDENTIFIER ;
 
 functionCall : functionName '(' argumentList? ')' ;
-functionName        locals [ Typespec type = null, SymTableEntry entry = null ] 
+functionName        locals [ Typespec type = None, SymTableEntry entry = None ] 
     : IDENTIFIER ;
      
 number          : sign? unsignedNumber ;
@@ -246,7 +246,7 @@ AT        : A T ;
 TIMES     : T I M E S;
 UPDATE    : U P D A T E;
 PRINT     : P R I N T;
-PRINTLN   : P R I N T L N;
+PRINTLN   : P R I N T L N ;
 CASE      : C A S E ;
 REPEAT    : R E P E A T ;
 UNTIL     : U N T I L ;

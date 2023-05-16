@@ -4,6 +4,7 @@
 # <p>Copyright (c) 2020 by Ronald Mak</p>
 from collections import OrderedDict
 
+from edu.yu.compilers.intermediate.symtable.Kind import Kind
 from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 
 
@@ -14,9 +15,9 @@ from edu.yu.compilers.intermediate.symtable.SymTableEntry import SymTableEntry
 # import java.util.TreeMap;
 # import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.VARIABLE;
 
-class SymTable(OrderedDict) :
+class SymTable(OrderedDict):
     UNNAMED_PREFIX = "_unnamed_"
-    serialVersionUID = 0 #will convert to long automatically when needed via python
+    serialVersionUID = 0  # will convert to long automatically when needed via python
     unnamedIndex = 0
 
     # Constructor.
@@ -28,26 +29,22 @@ class SymTable(OrderedDict) :
         self.maxSlotNumber = None
         self.ownerId = None
 
-
     # Generate a name for an unnamed type.
     # @return the name;
     @staticmethod
-    def generateUnnamedName(self) :
-        self.unnamedIndex += 1
-        return self.UNNAMED_PREFIX + self.unnamedIndex
-
+    def generateUnnamedName():
+        SymTable.unnamedIndex += 1
+        return SymTable.UNNAMED_PREFIX + str(SymTable.unnamedIndex)
 
     # Get the scope nesting level.
     # @return the nesting level.
     def getNestingLevel(self):
         return self.nestingLevel
 
-
     # Get the maximum local variables array slot number.
     #     @return the maximum slot number.
     def getMaxSlotNumber(self):
         return self.maxSlotNumber
-
 
     # Compute and return the next local variables array slot number
     # @return the slot number.
@@ -55,24 +52,21 @@ class SymTable(OrderedDict) :
         self.maxSlotNumber = self.slotNumber + 1
         return self.slotNumber
 
-
     # Getter.
     # @return the owner of this symbol table.
     def getOwner(self):
         return self.ownerId
 
-
     # Set the owner of this symbol table.
     # @param ownerId the symbol table entry of the owner.
-    def setOwner(self, ownerId) :
+    def setOwner(self, ownerId):
         self.ownerId = ownerId
-
 
     # Create and enter a new entry into the symbol table.
     # @param name the name of the entry.
     # @param kind the kind of entry.
     # @return the new entry.
-    def enter(self, name, kind) :
+    def enter(self, name, kind):
         entry = SymTableEntry(name, kind, self)
         super().__setitem__(name, entry)
         return entry
@@ -80,7 +74,7 @@ class SymTable(OrderedDict) :
     # Look up an existing symbol table entry.
     #     @param name the name of the entry.
     # @return the entry, or null if it does not exist.
-    def lookup(self, name) :
+    def lookup(self, name):
         return super().__getitem__(name)
 
     # Return an arraylist of entries sorted by name.
@@ -102,5 +96,5 @@ class SymTable(OrderedDict) :
 
         # Iterate over the entries and reset their kind.
         for entry in entries:
-            if entry.getKind() == SymTableEntry.Kind.VARIABLE:
+            if entry.getKind() == Kind.VARIABLE:
                 entry.setKind(kind)

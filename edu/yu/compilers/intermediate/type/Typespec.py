@@ -1,12 +1,12 @@
-from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
-from edu.yu.compilers.intermediate.symtable.SymTable import SymTableEntry
-
-from Form import Form
+# from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
+from edu.yu.compilers.intermediate.type.Form import Form
 
 
 class Typespec:
 
     def __init__(self, form: Form):
+        self.name = None
+        self.symTab = None
         self.form = form
         self.identifier = None
 
@@ -37,6 +37,16 @@ class Typespec:
     def isStructured(self):
         return (self.form == Form.ARRAY) or (self.form == Form.RECORD)
 
+    # get the Owner of this type spec
+    # the (enclosing scope)
+    def getSymTab(self):
+        return self.symTab
+
+    # Get the type name.
+    # @return the type name.
+    def getName(self):
+        return self.name
+
     # Get the type form.
     # @return the form.
 
@@ -52,8 +62,10 @@ class Typespec:
     # Setter.
     # @param identifier the type identifier (symbol table entry).
 
-    def setIdentifier(self, identifier):
-        self.identifier = identifier
+    def setIdentifier(self, name, symtab):
+        self.name = name
+        self.symTab = symtab
+        # self.identifier = identifier
 
     # Get the base type of this type.
     # @return the base type.
