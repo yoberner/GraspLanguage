@@ -2,8 +2,8 @@ import sys
 
 import antlr4
 
-from GraspLexer import GraspLexer
-from GraspParser import GraspParser
+from gen.GraspLexer import GraspLexer
+from gen.GraspParser import GraspParser
 from edu.yu.compilers.frontend.Semantics import Semantics
 from edu.yu.compilers.frontend.SyntaxErrorHandler import SyntaxErrorHandler
 from edu.yu.compilers.intermediate.util.BackendMode import BackendMode

@@ -1,7 +1,7 @@
 #  Semantic operations.
 #  Perform type checking and create symbol tables.
-from GraspParser import GraspParser
-from GraspVisitor import GraspVisitor
+from gen.GraspParser import GraspParser
+from gen.GraspVisitor import GraspVisitor
 from edu.yu.compilers.frontend.SemanticErrorHandler import SemanticErrorHandler
 from edu.yu.compilers.intermediate.symtable.Kind import Kind
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
