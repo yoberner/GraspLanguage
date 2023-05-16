@@ -1,21 +1,40 @@
 import sys
 
+import antlr4
+
 from GraspLexer import GraspLexer
 from GraspParser import GraspParser
 from edu.yu.compilers.frontend.Semantics import Semantics
 from edu.yu.compilers.frontend.SyntaxErrorHandler import SyntaxErrorHandler
-from edu.yu.compilers.intermediate.util import BackendMode
+from edu.yu.compilers.intermediate.util.BackendMode import BackendMode
 from antlr4 import FileStream, InputStream, CommonTokenStream
 
+
+# from antlr4 import CharStream
+# from org.antlr.v4.runtime.CharStreams import CharStreams
+# from org.antlr.v4.runtime.CommonTokenStream import CommonTokenStreams
+# from org.antlr.v4.runtime.tree.ParseTree import ParseTree
+
+# import antlr4.PascalLexer
+# import antlr4.PascalParser
+# import edu.yu.compilers.backend.compiler.Compiler
+# import edu.yu.compilers.backend.converter.Converter
+# import edu.yu.compilers.backend.interpreter.Executor
+# import edu.yu.compilers.frontend.Semantics
+# import edu.yu.compilers.frontend.SyntaxErrorHandler
+# import edu.yu.compilers.intermediate.symtable.SymTableEntry
+# import edu.yu.compilers.intermediate.util.BackendMode
+
 def main(args):
-    if args.length != 2:
+    if len(args) != 3:
+        print(args)
         print("USAGE: pascalCC {-execute|-convert|-compile} sourceFileName")
         return
 
-    option = args[0]
-    source_file_name = args[1]
+    option = args[1]
+    source_file_name = args[2]
 
-    mode = BackendMode.EXECUTOR # FIXME
+    mode = BackendMode.EXECUTOR  # FIXME
 
     if option.lower() == "-convert":
         mode = BackendMode.CONVERTER
@@ -28,10 +47,10 @@ def main(args):
         print("   Valid options: -execute, -convert, or -compile")
 
     # Create the input stream.
-    source = FileStream(source_file_name)
+    source = open(source_file_name, 'r').read()
 
     # Create the character stream from the input stream.
-    cs = InputStream(source) # FIXME
+    cs = antlr4.InputStream(source)  # FIXME
 
     # Custom syntax error handler.
     syntax_error_handler = SyntaxErrorHandler()

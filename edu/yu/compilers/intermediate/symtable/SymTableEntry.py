@@ -1,6 +1,6 @@
 import abc
-from Kind import Kind
-from Routine import Routine
+from edu.yu.compilers.intermediate.symtable.Kind import Kind
+from edu.yu.compilers.intermediate.symtable.Routine import Routine
 from enum import Enum
 from edu.yu.compilers.intermediate.type.Typespec import Typespec
 

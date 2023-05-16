@@ -1,0 +1,19 @@
+program SimpleScript;
+
+DO {
+
+    int i = 1
+
+	// test array
+	PRINTLN(1)
+
+
+	// test boolean:
+
+	if not b is true do {
+		println('b is false');
+	}
+	else do {
+		println('b is true');
+	}
+}

@@ -45,3 +45,5 @@ src/.DS_Store
 
 **/build/*
 *.antlr
+__pycache__/
+~$mpiler Semester Project Requirements Doc.docx

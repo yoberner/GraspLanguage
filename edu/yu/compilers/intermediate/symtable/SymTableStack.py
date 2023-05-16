@@ -10,7 +10,7 @@ class SymTableStack(list):
         super().__init__()
         self.currentNestingLevel = 0
         # change all below super() to self if doesnt work
-        super().append(SymTable(self.currentNestingLevel))  # ChatGPT used self instead of super()
+        self.append(SymTable(self.currentNestingLevel))  # ChatGPT used self instead of super()
         self.programId = None
 
     def getCurrentNestingLevel(self) -> int:  # chatGPT used - > <ret type> :
@@ -23,7 +23,7 @@ class SymTableStack(list):
         self.programId = _id
 
     def getLocalSymTable(self):
-        return super()[self.currentNestingLevel]
+        return self[self.currentNestingLevel]
 
     # ChatGPT Did not seem to properly override the methods in Python
 
@@ -31,30 +31,30 @@ class SymTableStack(list):
     def push(self):
         self.currentNestingLevel += 1
         symTable = SymTable(self.currentNestingLevel)
-        super().append(symTable)
+        self.append(symTable)
         return symTable
 
     @dispatch(SymTable)  # FIXME
     def push(self, symTable):
         self.currentNestingLevel += 1
-        super().append(symTable)
+        self.append(symTable)
 
         return symTable
 
     def _pop(self): # TODO no issues?
-        symTable = super()[self.currentNestingLevel]
+        symTable = self[self.currentNestingLevel]
         self.currentNestingLevel -= 1
-        super().remove(self.currentNestingLevel)
+        self.remove(self.currentNestingLevel)
         # We differ slightly but may be functionally identical - I remove by index
         # ChatGPT simply pops - but I think same effect is achieved.
 
         return symTable
 
     def enterLocal(self, name, kind):
-        return super()[self.currentNestingLevel].enter(name, kind)  # This is correct
+        return self[self.currentNestingLevel].enter(name, kind)  # This is correct
 
     def lookupLocal(self, name):
-        return super()[self.currentNestingLevel].lookup(name)  # This is correct
+        return self[self.currentNestingLevel].lookup(name)  # This is correct
 
     def lookup(self, name):
         foundEntry = None
@@ -62,7 +62,7 @@ class SymTableStack(list):
         # Search the current and enclosing scopes.
         i = self.currentNestingLevel
         while (i >= 0) and (foundEntry is None):
-            foundEntry = super()[i].lookup(name)
+            foundEntry = self[i].lookup(name)
             i += 1
             # it also added a break statement
 

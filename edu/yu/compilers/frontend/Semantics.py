@@ -31,20 +31,20 @@ class Semantics(GraspVisitor):
     # @param type the data type.
     # @return the default value.
 
-    @staticmethod
-    def defaultValue(_type: Typespec):
-        _type = _type.baseType()
-
-        if _type == Predefined.integerType:
-            return 0
-        elif _type == Predefined.realType:
-            return 0.0
-        elif _type == Predefined.booleanType:
-            return False
-        elif _type == Predefined.charType:
-            return '#'
-        else:
-            return "#"
+    # @staticmethod
+    # def defaultValue(_type: Typespec):
+    #     _type = _type.baseType()
+    #
+    #     if _type == Predefined.integerType:
+    #         return 0
+    #     elif _type == Predefined.realType:
+    #         return 0.0
+    #     elif _type == Predefined.booleanType:
+    #         return False
+    #     elif _type == Predefined.charType:
+    #         return '#'
+    #     else:
+    #         return "#"
 
     def getProgramId(self):
         return self.programId
@@ -52,10 +52,10 @@ class Semantics(GraspVisitor):
     def getErrorCount(self):
         return self.error.get_count()
 
-    def printSymbolTableStack(self):
-        # Print the cross-reference table.
-        crossReferencer = CrossReferencer()
-        crossReferencer.printCrossRefTable(self.symTableStack)
+    # def printSymbolTableStack(self):
+    #     # Print the cross-reference table.
+    #     crossReferencer = CrossReferencer()
+    #     crossReferencer.printCrossRefTable(self.symTableStack)
 
     def visitProgram(self, ctx):
         self.visit(ctx.programHeader())
@@ -79,7 +79,7 @@ class Semantics(GraspVisitor):
 
     def visitConstantDefinition(self, ctx):
         idCtx = ctx.constantIdentifier()
-        constantName = idCtx.IDENTIFIER().getText().toLowerCase()
+        constantName = idCtx.IDENTIFIER().getText().lower()
         constantId = self.symTableStack.lookupLocal(constantName)
 
         if constantId is None:
@@ -91,19 +91,19 @@ class Semantics(GraspVisitor):
             constantId.setType(constCtx.type)
 
             idCtx.entry = constantId
-            idCtx.type = constCtx.type
+            idCtx.type_ = constCtx.type
         else:
             self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, ctx)  # TODO change this enum format
 
             idCtx.entry = constantId
-            idCtx.type = Predefined.integerType
+            idCtx.type_ = Predefined.integerType
 
         constantId.appendLineNumber(ctx.start.getLine())  # TODO WHAT?
         return None
 
     def visitConstant(self, ctx):
         if ctx.IDENTIFIER() is not None:
-            constantName = ctx.IDENTIFIER().getText().toLowerCase()
+            constantName = ctx.IDENTIFIER().getText().lower()
             constantId = self.symTableStack.lookup(constantName)
 
             if constantId is not None:
@@ -111,35 +111,35 @@ class Semantics(GraspVisitor):
                 if (kind != Kind.CONSTANT) and (kind != Kind.ENUMERATION_CONSTANT):
                     self.error.flag(SemanticErrorHandler.Code.INVALID_CONSTANT, ctx)
 
-                ctx.type = constantId.getType()
+                ctx.type_ = constantId.getType()
                 ctx.value = constantId.getValue()
 
                 constantId.appendLineNumber(ctx.start.getLine())
             else:
                 self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx)
 
-                ctx.type = Predefined.integerType
+                ctx.type_ = Predefined.integerType
                 ctx.value = 0
 
         elif ctx.characterConstant() is not None:
-            ctx.type = Predefined.charType
+            ctx.type_ = Predefined.charType
             ctx.value = ctx.getText().charAt(1)
         elif ctx.stringConstant() is not None:
             graspString = ctx.stringConstant().STRING().getText()
             unquoted = graspString[1, graspString.length() - 1]
-            ctx.type = Predefined.stringType
+            ctx.type_ = Predefined.stringType
             ctx.value = unquoted.replace("''", "'").replace("\"", "\\\"")
         else:
             if ctx.unsignedNumber().integerConstant() is not None:
-                ctx.type = Predefined.integerType
+                ctx.type_ = Predefined.integerType
                 ctx.value = int(ctx.getText())
             else:
-                ctx.type = Predefined.realType
+                ctx.type_ = Predefined.realType
                 ctx.value = float(ctx.getText())
 
         return ctx.value
 
-    def visitTypeDefinition(self, ctx):
+    def visitTypeDefinition(self, ctx: GraspParser.TypeDefinitionContext):
         idCtx = ctx.typeIdentifier()
         typeName = idCtx.IDENTIFIER().getText().toLowerCase()
         typeId = self.symTableStack.lookupLocal(typeName)
@@ -155,21 +155,21 @@ class Semantics(GraspVisitor):
 
             typeId = self.symTableStack.enterLocal(typeName, Kind.TYPE)
             typeId.setType(typespecCtx.type)
-            typespecCtx.type.setIdentifier(typeId)
+            typespecCtx.type.setIdentifier(typeId.getName(), typeId.getSymTab())  # setIdentifier(typeId)
         # Redeclared identifier.
         else:
             self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, ctx)
 
         idCtx.entry = typeId
-        idCtx.type = typespecCtx.type
+        idCtx.type_ = typespecCtx.type_
 
         typeId.appendLineNumber(ctx.start.getLine())
         return None
 
-    def visitRecordTypespec(self, ctx):
+    def visitRecordTypespec(self, ctx: GraspParser.RecordTypespecContext):
         # Create an unnamed record type.
         recordTypeName = SymTable.generateUnnamedName()
-        self.createRecordType(ctx, recordTypeName)
+        self.createRecordType(ctx, recordTypeName)  # FIXME ?
 
         return None
 
@@ -179,13 +179,13 @@ class Semantics(GraspVisitor):
     # @param recordTypeName    the name of the record type.
     # @return the symbol table entry of the record type identifier.
 
-    def createRecordType(self, recordTypeSpecCtx, recordTypeName):
+    def createRecordType(self, recordTypeSpecCtx: GraspParser.RecordTypespecContext, recordTypeName):
         recordTypeCtx = recordTypeSpecCtx.recordType()
         recordType = Typespec(Form.RECORD)
 
         recordTypeId = self.symTableStack.enterLocal(recordTypeName, Kind.TYPE)
         recordTypeId.setType(recordType)
-        recordType.setIdentifier(recordTypeId)
+        recordType.setIdentifier(recordTypeId.getName(), recordTypeId.getSymTab())
 
         recordTypePath = self.createRecordTypePath(recordType)
         recordType.setRecordTypePath(recordTypePath)
@@ -195,7 +195,7 @@ class Semantics(GraspVisitor):
         recordType.setRecordSymTable(recordSymTable)
 
         recordTypeCtx.entry = recordTypeId
-        recordTypeSpecCtx.type = recordType
+        recordTypeSpecCtx.type_ = recordType
 
         return recordTypeId
 
@@ -205,9 +205,8 @@ class Semantics(GraspVisitor):
     # @return the pathname.
 
     def createRecordTypePath(self, recordType):
-        recordId = recordType.getIdentifier()
-        parentId = recordId.getSymTable().getOwner()
-        path = recordId.getName()
+        parentId = recordType.getSymTab().getOwner()
+        path = recordType.getName()
 
         while (parentId.getKind() == Kind.TYPE) and (parentId.getType().getForm() == Form.RECORD):
             path = parentId.getName() + "$" + path
@@ -234,13 +233,13 @@ class Semantics(GraspVisitor):
 
     def visitSimpleTypespec(self, ctx):
         self.visit(ctx.simpleType())
-        ctx.type = ctx.simpleType().type
+        ctx.type_ = ctx.simpleType().type
 
         return None
 
     def visitTypeIdentifierTypespec(self, ctx):
         self.visit(ctx.typeIdentifier())
-        ctx.type = ctx.typeIdentifier().type
+        ctx.type_ = ctx.typeIdentifier().type
 
         return None
 
@@ -251,14 +250,14 @@ class Semantics(GraspVisitor):
         if typeId is not None:
             if typeId.getKind() != Kind.TYPE:
                 self.error.flag(SemanticErrorHandler.Code.INVALID_TYPE, ctx)
-                ctx.type = Predefined.integerType
+                ctx.type_ = Predefined.integerType
             else:
-                ctx.type = typeId.getType()
+                ctx.type_ = typeId.getType()
 
             typeId.appendLineNumber(ctx.start.getLine())
         else:
             self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx)
-            ctx.type = Predefined.integerType
+            ctx.type_ = Predefined.integerType
 
         ctx.entry = typeId
         return None
@@ -284,12 +283,12 @@ class Semantics(GraspVisitor):
                 self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, constCtx)
 
             constIdCtx.entry = constantId
-            constIdCtx.type = enumType
+            constIdCtx.type_ = enumType
 
             constantId.appendLineNumber(ctx.start.getLine())
 
         enumType.setEnumerationConstants(constants)
-        ctx.type = enumType
+        ctx.type_ = enumType
 
         return None
 
@@ -332,7 +331,7 @@ class Semantics(GraspVisitor):
         type.setSubrangeMinValue(minValue)
         type.setSubrangeMaxValue(maxValue)
 
-        ctx.type = type
+        ctx.type_ = type
         return None
 
     def visitArrayTypespec(self, ctx):
@@ -340,7 +339,7 @@ class Semantics(GraspVisitor):
         arrayCtx = ctx.arrayType()
         listCtx = arrayCtx.arrayDimensionList()
 
-        ctx.type = arrayType
+        ctx.type_ = arrayType
 
         # Loop over the array dimensions.
         count = listCtx.simpleType().size()
@@ -462,9 +461,9 @@ class Semantics(GraspVisitor):
                 returnType = Predefined.integerType
 
             routineId.setType(returnType)
-            idCtx.type = returnType
+            idCtx.type_ = returnType
         else:
-            idCtx.type = None
+            idCtx.type_ = None
 
         self.visit(ctx.block().declarations())
 
@@ -518,7 +517,7 @@ class Semantics(GraspVisitor):
                 self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, paramIdCtx)
 
             paramIdCtx.entry = paramId
-            paramIdCtx.type = paramType
+            paramIdCtx.type_ = paramType
 
             parameterSublist.append(paramId)
             paramId.appendLineNumber(lineNumber)
@@ -537,8 +536,7 @@ class Semantics(GraspVisitor):
         rhsType = rhsCtx.expression().type
 
         if not TypeChecker.areAssignmentCompatible(lhsType, rhsType):
-            self.error(SemanticErrorHandler.Code.INCOMPATIBLE_ASSIGNMENT,
-                       rhsCtx)  # TODO self.error.flag(SemanticErrorHandler.Code.INCOMPATIBLE_ASSIGNMENT, rhsCtx)?
+            self.error.flag(SemanticErrorHandler.Code.INCOMPATIBLE_ASSIGNMENT, rhsCtx)
 
         return None
 
@@ -546,7 +544,7 @@ class Semantics(GraspVisitor):
     def visitLhs(self, ctx):
         varCtx = ctx.variable()
         self.visit(varCtx)
-        ctx.type = varCtx.type
+        ctx.type_ = varCtx.type
 
         return None
 
@@ -592,18 +590,18 @@ class Semantics(GraspVisitor):
                     constCtx = caseConstCtx.constant()
                     constValue = self.visit(constCtx)
 
-                    caseConstCtx.type = constCtx.type
+                    caseConstCtx.type_ = constCtx.type
                     caseConstCtx.value = None
 
-                    if constCtx.type != exprType:
+                    if constCtx.type_ != exprType:
                         self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, constCtx)
 
-                    elif (constCtx.type == Predefined.integerType) or (
+                    elif (constCtx.type_ == Predefined.integerType) or (
                             constCtx.type.getForm() == Form.ENUMERATION):  # TODO == same thing for enums in python? I think its good
                         caseConstCtx.value = int(constValue)
-                    elif constCtx.type == Predefined.charType:
+                    elif constCtx.type_ == Predefined.charType:
                         caseConstCtx.value = chr(constValue)
-                    elif constCtx.type == Predefined.stringType:
+                    elif constCtx.type_ == Predefined.stringType:
                         caseConstCtx.value = str(constValue)
 
                     if caseConstCtx.value in constants:
@@ -661,9 +659,9 @@ class Semantics(GraspVisitor):
         self.visit(startCtx)
         self.visit(endCtx)
 
-        if startCtx.type != controlType:
+        if startCtx.type_ != controlType:
             self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, startCtx)
-        if startCtx.type != endCtx.type:
+        if startCtx.type_ != endCtx.type:
             self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, endCtx)
 
         self.visit(ctx.statement())
@@ -707,7 +705,7 @@ class Semantics(GraspVisitor):
         functionId = self.symTableStack.lookup(name)
         badName = False
 
-        ctx.type = Predefined.integerType
+        ctx.type_ = Predefined.integerType
 
         if functionId is None:
             self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, nameCtx)
@@ -728,10 +726,10 @@ class Semantics(GraspVisitor):
             parameters = functionId.getRoutineParameters()
             self.checkCallArguments(listCtx, parameters)
 
-            ctx.type = functionId.getType()
+            ctx.type_ = functionId.getType()
 
         nameCtx.entry = functionId
-        nameCtx.type = ctx.type
+        nameCtx.type_ = ctx.type
 
         return None
 
@@ -793,7 +791,7 @@ class Semantics(GraspVisitor):
         self.visit(simpleCtx1)
 
         simpleType1 = simpleCtx1.type
-        ctx.type = simpleType1
+        ctx.type_ = simpleType1
 
         relOpCtx = ctx.relOp()
 
@@ -808,15 +806,15 @@ class Semantics(GraspVisitor):
             if not TypeChecker.areComparisonCompatible(simpleType1, simpleType2):
                 self.error.flag(SemanticErrorHandler.Code.INCOMPATIBLE_COMPARISON, ctx)
 
-            ctx.type = Predefined.booleanType
+            ctx.type_ = Predefined.booleanType
 
         return None
 
     def visitSimpleExpression(self, ctx):
-        count = ctx.term().size()
+        count = len(ctx.term())
         signCtx = ctx.sign()
         hasSign = signCtx is not None
-        termCtx1 = ctx.term().get(0)  # TODO Is this correct? is it not [0]
+        termCtx1 = ctx.term()[0]  # TODO Is this correct? is it not [0]
 
         if hasSign:
             sign = signCtx.getText()
@@ -893,12 +891,12 @@ class Semantics(GraspVisitor):
                         termType2 = Predefined.integerType
             termType1 = termType2
 
-        ctx.type = termType1
+        ctx.type_ = termType1
         return None
 
     def visitTerm(self, ctx):
         count = len(ctx.factor())
-        factorCtx1 = ctx.factor().get(0)  # TODO get?
+        factorCtx1 = ctx.factor()[0]
 
         # First factor.
         self.visit(factorCtx1)
@@ -906,8 +904,8 @@ class Semantics(GraspVisitor):
 
         # Loop over any subsequent factors.
         for i in range(1, count):
-            op = ctx.mulOp().get(i - 1).getText().lower()  # TODO get()?
-            factorCtx2 = ctx.factor().get(i)  # TODO get()?
+            op = ctx.mulOp()[i - 1].getText().lower()
+            factorCtx2 = ctx.factor()[i]
             self.visit(factorCtx2)
             factorType2 = factorCtx2.type
 
@@ -963,14 +961,14 @@ class Semantics(GraspVisitor):
 
             factorType1 = factorType2
 
-        ctx.type = factorType1
+        ctx.type_ = factorType1
         return None
 
     def visitVariableFactor(self, ctx):
         varCtx = ctx.variable()
 
         self.visit(varCtx)
-        ctx.type = varCtx.type
+        ctx.type_ = varCtx.type
 
         return None
 
@@ -980,7 +978,7 @@ class Semantics(GraspVisitor):
 
         self.visit(varIdCtx)
         ctx.entry = varIdCtx.entry
-        ctx.type = self.variableDatatype(ctx, varIdCtx.type)
+        ctx.type_ = self.variableDatatype(ctx, varIdCtx.type)
 
         return None
 
@@ -991,7 +989,7 @@ class Semantics(GraspVisitor):
         if variableId is not None:
             lineNumber = ctx.start.line
 
-            ctx.type = variableId.getType()
+            ctx.type_ = variableId.getType()
             ctx.entry = variableId
             variableId.appendLineNumber(lineNumber)
 
@@ -1000,7 +998,7 @@ class Semantics(GraspVisitor):
                 self.error.flag(SemanticErrorHandler.Code.INVALID_VARIABLE, ctx)
         else:
             self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx)
-            ctx.type = Predefined.integerType
+            ctx.type_ = Predefined.integerType
 
         return None
 
@@ -1039,7 +1037,7 @@ class Semantics(GraspVisitor):
 
                         type = fieldId.getType()
                         fieldCtx.entry = fieldId
-                        fieldCtx.type = type
+                        fieldCtx.type_ = type
                         fieldId.appendLineNumber(modCtx.getStart().getLine())
                     else:
                         self.error.flag(SemanticErrorHandler.Code.INVALID_FIELD, modCtx)
@@ -1057,33 +1055,33 @@ class Semantics(GraspVisitor):
         unsignedCtx = numberCtx.unsignedNumber()
         integerCtx = unsignedCtx.integerConstant()
 
-        ctx.type = Predefined.integerType if integerCtx is not None else Predefined.realType
+        ctx.type_ = Predefined.integerType if integerCtx is not None else Predefined.realType
 
         return None
 
     def visitCharacterFactor(self, ctx):
 
-        ctx.type = Predefined.charType
+        ctx.type_ = Predefined.charType
         return None
 
     def visitStringFactor(self, ctx):
 
-        ctx.type = Predefined.stringType
+        ctx.type_ = Predefined.stringType
         return None
 
     def visitNotFactor(self, ctx):
         factorCtx = ctx.factor()
         self.visit(factorCtx)
 
-        if factorCtx.type != Predefined.booleanType:
+        if factorCtx.type_ != Predefined.booleanType:
             self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx)
 
-        ctx.type = Predefined.booleanType
+        ctx.type_ = Predefined.booleanType
         return None
 
     def visitParenthesizedFactor(self, ctx):
         exprCtx = ctx.expression()
         self.visit(exprCtx)
-        ctx.type = exprCtx.type
+        ctx.type_ = exprCtx.type
 
         return None

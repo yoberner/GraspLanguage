@@ -5,6 +5,11 @@ if __name__ is not None and "." in __name__:
 else:
     from GraspParser import GraspParser
 
+    # package antlr4
+    # import java.util.HashMap
+    # import edu.yu.compilers.intermediate.symtable.SymTableEntry
+    # import edu.yu.compilers.intermediate.type.Typespec
+
 
 # This class defines a complete generic visitor for a parse tree produced by GraspParser.
 
