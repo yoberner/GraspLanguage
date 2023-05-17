@@ -1,21 +1,3 @@
-# package edu.yu.compilers.backend.converter;
-
-# import antlr4.PascalBaseVisitor;
-# import antlr4.PascalParser;
-# import antlr4.PascalParser.CaseConstantContext;
-# import edu.yu.compilers.intermediate.symtable.Predefined;
-# import edu.yu.compilers.intermediate.symtable.SymTable;
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry;
-# import edu.yu.compilers.intermediate.type.Typespec;
-# import edu.yu.compilers.intermediate.type.Typespec.Form;
-
-# import java.io.PrintWriter;
-# import java.io.StringWriter;
-# import java.util.Hashtable;
-
-# import static edu.yu.compilers.intermediate.symtable.SymTableEntry.Kind.*;
-# import static edu.yu.compilers.intermediate.type.Typespec.Form.*;
-
 # Convert Pascal programs to Java.
 class Converter(PascalBaseVisitor):
 
