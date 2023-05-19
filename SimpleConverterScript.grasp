@@ -1,0 +1,22 @@
+program Test;
+
+FINAL {
+	integer FOO = 1;
+}
+
+var {
+	integer i;
+}
+
+FUNCTION cube(integer x) returns integer {
+	integer cube = x * x * x;
+	return cube;
+}
+
+DO {
+
+	//test array
+	println(FOO);
+	println(i);
+
+	}

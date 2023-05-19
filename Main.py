@@ -7,23 +7,9 @@ from gen.GraspParser import GraspParser
 from edu.yu.compilers.frontend.Semantics import Semantics
 from edu.yu.compilers.frontend.SyntaxErrorHandler import SyntaxErrorHandler
 from edu.yu.compilers.intermediate.util.BackendMode import BackendMode
-from antlr4 import FileStream, InputStream, CommonTokenStream
+from edu.yu.compilers.backend.converter import Converter
+from antlr4 import CommonTokenStream
 
-
-# from antlr4 import CharStream
-# from org.antlr.v4.runtime.CharStreams import CharStreams
-# from org.antlr.v4.runtime.CommonTokenStream import CommonTokenStreams
-# from org.antlr.v4.runtime.tree.ParseTree import ParseTree
-
-# import antlr4.PascalLexer
-# import antlr4.PascalParser
-# import edu.yu.compilers.backend.compiler.Compiler
-# import edu.yu.compilers.backend.converter.Converter
-# import edu.yu.compilers.backend.interpreter.Executor
-# import edu.yu.compilers.frontend.Semantics
-# import edu.yu.compilers.frontend.SyntaxErrorHandler
-# import edu.yu.compilers.intermediate.symtable.SymTableEntry
-# import edu.yu.compilers.intermediate.util.BackendMode
 
 def main(args):
     if len(args) != 3:
@@ -86,28 +72,12 @@ def main(args):
         print("Object file not created or modified.")
         return
 
-    # // Pass 3: Translation.
-    # switch (mode) {
-    #     case EXECUTOR -> {
-    #         // Pass 3: Execute the Pascal program.
-    #         SymTableEntry programId = pass2.getProgramId()
-    #         Executor pass3 = new Executor(programId)
-    #         pass3.visit(tree)
-    #     }
-    #     case CONVERTER -> {
-    #         // Pass 3: Convert from Pascal to Java.
-    #         Converter pass3 = new Converter()
-    #         String objectCode = (String)pass3.visit(tree)
-    #         System.out.println(objectCode)
-    #     }
-    #     case COMPILER -> {
-    #         // Pass 3: Compile the Pascal program.
-    #         SymTableEntry programId = pass2.getProgramId()
-    #         Compiler pass3 = new Compiler(programId.getName())
-    #         pass3.visit(tree)
-    #         System.out.println(pass3.getObjectFileName())
-    #     }
-    # }
+    mode = BackendMode.CONVERTER
+    if mode == BackendMode.CONVERTER:
+        # Pass 3: Convert from Pascal to Java.
+        pass3 = Converter()
+        objectCode = str(pass3.visit(tree))
+        print(objectCode)
 
 
 if __name__ == "__main__":

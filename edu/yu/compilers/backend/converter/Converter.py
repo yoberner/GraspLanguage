@@ -1,5 +1,8 @@
 # Convert Pascal programs to Java.
-class Converter(PascalBaseVisitor):
+from GraspVisitor import GraspVisitor
+
+
+class Converter(GraspVisitor):
 
     # Map a Pascal datatype name to the Java datatype name.
     type_name_table = {
