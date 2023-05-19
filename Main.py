@@ -12,28 +12,29 @@ from antlr4 import CommonTokenStream
 
 
 def main(args):
-    if len(args) != 3:
-        print(args)
-        print("USAGE: pascalCC {-execute|-convert|-compile} sourceFileName")
-        return
-
-    option = args[1]
-    source_file_name = args[2]
-
-    mode = BackendMode.EXECUTOR  # FIXME
-
-    if option.lower() == "-convert":
-        mode = BackendMode.CONVERTER
-    elif option.lower() == "-execute":
-        mode = BackendMode.EXECUTOR
-    elif option.lower() == "-compile":
-        mode = BackendMode.COMPILER
-    else:
-        print("ERROR: Invalid option.")
-        print("   Valid options: -execute, -convert, or -compile")
-
+    # if len(args) != 3:
+    #     print(args)
+    #     print("USAGE: pascalCC {-execute|-convert|-compile} sourceFileName")
+    #     return
+    #
+    # option = args[1]
+    # source_file_name = args[2]
+    #
+    # mode = BackendMode.EXECUTOR  # FIXME
+    #
+    # if option.lower() == "-convert":
+    #     mode = BackendMode.CONVERTER
+    # elif option.lower() == "-execute":
+    #     mode = BackendMode.EXECUTOR
+    # elif option.lower() == "-compile":
+    #     mode = BackendMode.COMPILER
+    # else:
+    #     print("ERROR: Invalid option.")
+    #     print("   Valid options: -execute, -convert, or -compile")
+    mode = BackendMode.CONVERTER
     # Create the input stream.
-    source = open(source_file_name, 'r').read()
+    # source = open(source_file_name, 'r').read()
+    source = open('SimpleConverterScript.grasp', 'r').read()
 
     # Create the character stream from the input stream.
     cs = antlr4.InputStream(source)  # FIXME
@@ -72,7 +73,7 @@ def main(args):
         print("Object file not created or modified.")
         return
 
-    mode = BackendMode.CONVERTER
+
     if mode == BackendMode.CONVERTER:
         # Pass 3: Convert from Pascal to Java.
         pass3 = Converter()
