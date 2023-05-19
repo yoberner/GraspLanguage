@@ -120,6 +120,11 @@ class GraspVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GraspParser#arrayDimensionList.
+    def visitArrayDimensionList(self, ctx:GraspParser.ArrayDimensionListContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GraspParser#recordType.
     def visitRecordType(self, ctx:GraspParser.RecordTypeContext):
         return self.visitChildren(ctx)
@@ -185,8 +190,8 @@ class GraspVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GraspParser#parameterDeclarations.
-    def visitParameterDeclarations(self, ctx:GraspParser.ParameterDeclarationsContext):
+    # Visit a parse tree produced by GraspParser#parameterDeclaration.
+    def visitParameterDeclaration(self, ctx:GraspParser.ParameterDeclarationContext):
         return self.visitChildren(ctx)
 
 
@@ -425,8 +430,8 @@ class GraspVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by GraspParser#functionCall.
-    def visitFunctionCall(self, ctx:GraspParser.FunctionCallContext):
+    # Visit a parse tree produced by GraspParser#functionCallStatement.
+    def visitFunctionCallStatement(self, ctx:GraspParser.FunctionCallStatementContext):
         return self.visitChildren(ctx)
 
 

@@ -17,6 +17,7 @@ class SemanticErrorHandler:
         TYPE_MUST_BE_INTEGER = "Datatype must be integer"
         TYPE_MUST_BE_NUMERIC = "Datatype must be integer or real"
         TYPE_MUST_BE_BOOLEAN = "Datatype must be boolean"
+        TYPE_MUST_BE_STRING = "Datatype must be string"
         INCOMPATIBLE_ASSIGNMENT = "Incompatible assignment"
         INCOMPATIBLE_COMPARISON = "Incompatible comparison"
         DUPLICATE_CASE_CONSTANT = "Duplicate CASE constant"

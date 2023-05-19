@@ -1,17 +1,54 @@
 program SimpleScript;
 
+// FINAL {
+
+// //These lines should throw re-declared id errors for constants, types, enums, routines, and params
+// integer finalX = 5;
+// integer finalX = 6;
+// }
+
+// TYPE {
+// 
+// 	Person = blueprint {
+// 		integer id;
+// 		String name;
+// 	}
+// 
+// 	Person = blueprint {
+// 	    integer id;
+// 	    String name;
+// 	    String address;
+// 	}
+// }
+
+ var {
+    // decimal invalid]ConstantName;
+    integer i;
+    boolean b;
+//  integer b;
+// 	integer i, j, k, l;
+// 	decimal x, y;
+// 	boolean b;
+// 	character c;
+// 	string s;
+// 	integer[] rankings;
+ }
+ FUNCTION cube(integer x) returns integer {
+ 	integer cube = x * x * x;
+ 	return cube;
+ }
+//
+// FUNCTION cube(integer x) returns integer {
+// 	integer cube = x * x * x;
+// 	return cube;
+// }
+
 DO {
+    // These lines should throw Undeclared Identifier errors - try each one individually
+    // undeclaredVariable = 5;
+    // undeclaredFunction();
+    i = cube(b + 5);
 
-	// test array
-	PRINTLN('hi');
 
 
-	// test boolean:
-
-	if not b is true do {
-		println('b is false');
-	}
-	else do {
-		println('b is true');
-	}
 }

@@ -51,7 +51,8 @@ simpleType          locals [ Typespec type = None ]
     ;
 
 arrayType
-    : (simpleType | recordType ) ('['']')* ;
+    : (simpleType | recordType) arrayDimensionList ;
+arrayDimensionList : '[' expression ']' ('[' expression ']')* ;
 
 recordType          locals [ SymTableEntry entry = None ]
     : BLUEPRINT '{' recordFields ';'? '}' ;
@@ -73,8 +74,8 @@ routineIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
 parameters                : '(' parameterDeclarationsList ')' ;
-parameterDeclarationsList : parameterDeclarations ( ',' parameterDeclarations )* ;
-parameterDeclarations     : VAR? typeIdentifier parameterIdentifier ;
+parameterDeclarationsList : parameterDeclaration ( ',' parameterDeclaration )* ;
+parameterDeclaration     : VAR? typeIdentifier parameterIdentifier ;
 
 
 parameterIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
@@ -91,6 +92,7 @@ statement : compoundStatement
           | printlnStatement ';'
           | readStatement ';'
           | readlnStatement ';'
+          | functionCallStatement ';'
           | emptyStatement ';'
           | returnStatement ';'
           ;
@@ -157,7 +159,7 @@ factor              locals [ Typespec type = None ]
     | number               # numberFactor
     | characterConstant    # characterFactor
     | stringConstant       # stringFactor
-    | functionCall         # functionCallFactor
+    | functionCallStatement         # functionCallFactor
     | NOT factor           # notFactor
     | '(' expression ')'   # parenthesizedFactor
     ;
@@ -172,7 +174,8 @@ index     : expression ;
 field               locals [ Typespec type = None, SymTableEntry entry = None ]     
     : IDENTIFIER ;
 
-functionCall : functionName '(' argumentList? ')' ;
+
+functionCallStatement : functionName '(' argumentList? ')' ;
 functionName        locals [ Typespec type = None, SymTableEntry entry = None ] 
     : IDENTIFIER ;
      

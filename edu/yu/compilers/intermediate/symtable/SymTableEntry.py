@@ -121,7 +121,7 @@ class SymTableEntry:
     # @param lineNumber the line number to append.
 
     def appendLineNumber(self, lineNumber) :
-        self.lineNumbers.add(lineNumber)
+        self.lineNumbers.append(lineNumber)
 
 
     # Get the data value stored with this entry.
@@ -196,7 +196,7 @@ class SymTableEntry:
     # @param subroutineId the symbol table entry of the subroutine to append.
 
     def appendSubroutine(self, subroutineId) :
-        self.info.subroutines.add(subroutineId)
+        self.info.subroutines.append(subroutineId)
 
     # Get the routine's executable code.
     #

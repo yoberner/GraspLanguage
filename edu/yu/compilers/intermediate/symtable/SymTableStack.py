@@ -41,10 +41,10 @@ class SymTableStack(list):
 
         return symTable
 
-    def _pop(self): # TODO no issues?
+    def _pop(self):  # TODO no issues?
         symTable = self[self.currentNestingLevel]
+        self.pop(self.currentNestingLevel)
         self.currentNestingLevel -= 1
-        self.remove(self.currentNestingLevel)
         # We differ slightly but may be functionally identical - I remove by index
         # ChatGPT simply pops - but I think same effect is achieved.
 
@@ -63,7 +63,7 @@ class SymTableStack(list):
         # i = self.currentNestingLevel
         # while (i >= 0) and (foundEntry is None):
         #     foundEntry = self[i].lookup(name)
-        #     i += 1
+        #     i -= 1 # i made decrememnt mistake i think
         #     # it also added a break statement
         # NO WAAY CRAZY
         # ChatGPT's loop - very nice

@@ -1,5 +1,7 @@
 #  Semantic operations.
 #  Perform type checking and create symbol tables.
+import re
+
 from gen.GraspParser import GraspParser
 from gen.GraspVisitor import GraspVisitor
 from edu.yu.compilers.frontend.SemanticErrorHandler import SemanticErrorHandler
@@ -88,7 +90,7 @@ class Semantics(GraspVisitor):
 
             constantId = self.symTableStack.enterLocal(constantName, Kind.CONSTANT)
             constantId.setValue(constValue)
-            constantId.setType(constCtx.type)
+            constantId.setType(constCtx.type_)
 
             idCtx.entry = constantId
             idCtx.type_ = constCtx.type_
@@ -98,7 +100,7 @@ class Semantics(GraspVisitor):
             idCtx.entry = constantId
             idCtx.type_ = Predefined.integerType
 
-        constantId.appendLineNumber(ctx.start.getLine())  # TODO WHAT?
+        constantId.appendLineNumber(ctx.start.line)
         return None
 
     def visitConstant(self, ctx):
@@ -114,7 +116,7 @@ class Semantics(GraspVisitor):
                 ctx.type_ = constantId.getType()
                 ctx.value = constantId.getValue()
 
-                constantId.appendLineNumber(ctx.start.getLine())
+                constantId.appendLineNumber(ctx.start.line)
             else:
                 self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx)
 
@@ -141,20 +143,24 @@ class Semantics(GraspVisitor):
 
     def visitTypeDefinition(self, ctx: GraspParser.TypeDefinitionContext):
         idCtx = ctx.typeIdentifier()
-        typeName = idCtx.IDENTIFIER().getText().toLowerCase()
+        typeName = idCtx.IDENTIFIER().getText().lower()
         typeId = self.symTableStack.lookupLocal(typeName)
 
         typespecCtx = ctx.typeSpecification()
 
         # If it's a record type, create a named record type.
         if isinstance(typespecCtx, GraspParser.RecordTypespecContext):
-            typeId = Semantics.createRecordType(typespecCtx, typeName)
+            if self.symTableStack.lookupLocal(typeName) is None:
+                typeId = self.createRecordType(typespecCtx, typeName)  # TODO ??? highilighted portion?
+            else:
+                self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, idCtx)
+
         # Enter the type name of any other type into the symbol table.
         elif typeId is None:
             self.visit(typespecCtx)
 
             typeId = self.symTableStack.enterLocal(typeName, Kind.TYPE)
-            typeId.setType(typespecCtx.type)
+            typeId.setType(typespecCtx.type_)
             typespecCtx.type.setIdentifier(typeId.getName(), typeId.getSymTab())  # setIdentifier(typeId)
         # Redeclared identifier.
         else:
@@ -163,7 +169,7 @@ class Semantics(GraspVisitor):
         idCtx.entry = typeId
         idCtx.type_ = typespecCtx.type_
 
-        typeId.appendLineNumber(ctx.start.getLine())
+        typeId.appendLineNumber(ctx.start.line)
         return None
 
     def visitRecordTypespec(self, ctx: GraspParser.RecordTypespecContext):
@@ -179,13 +185,13 @@ class Semantics(GraspVisitor):
     # @param recordTypeName    the name of the record type.
     # @return the symbol table entry of the record type identifier.
 
-    def createRecordType(self, recordTypeSpecCtx: GraspParser.RecordTypespecContext, recordTypeName):
+    def createRecordType(self, recordTypeSpecCtx, recordTypeName):
         recordTypeCtx = recordTypeSpecCtx.recordType()
         recordType = Typespec(Form.RECORD)
 
         recordTypeId = self.symTableStack.enterLocal(recordTypeName, Kind.TYPE)
         recordTypeId.setType(recordType)
-        recordType.setIdentifier(recordTypeId.getName(), recordTypeId.getSymTab())
+        recordType.setIdentifier(recordTypeId.getName(), recordTypeId.getSymTable())
 
         recordTypePath = self.createRecordTypePath(recordType)
         recordType.setRecordTypePath(recordTypePath)
@@ -227,7 +233,7 @@ class Semantics(GraspVisitor):
         recordSymTable.setOwner(ownerId)
         self.visit(ctx.variableDeclarationsList())
         recordSymTable.resetVariables(Kind.RECORD_FIELD)
-        self.symTableStack.pop()
+        self.symTableStack._pop()
 
         return recordSymTable
 
@@ -254,7 +260,7 @@ class Semantics(GraspVisitor):
             else:
                 ctx.type_ = typeId.getType()
 
-            typeId.appendLineNumber(ctx.start.getLine())
+            typeId.appendLineNumber(ctx.start.line)
         else:
             self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx)
             ctx.type_ = Predefined.integerType
@@ -270,7 +276,7 @@ class Semantics(GraspVisitor):
         # Loop over the enumeration constants.
         for constCtx in ctx.enumerationType().enumerationConstant():
             constIdCtx = constCtx.constantIdentifier()
-            constantName = constIdCtx.IDENTIFIER().getText().toLowerCase()
+            constantName = constIdCtx.IDENTIFIER().getText().lower()
             constantId = self.symTableStack.lookupLocal(constantName)
 
             if constantId is None:
@@ -285,7 +291,7 @@ class Semantics(GraspVisitor):
             constIdCtx.entry = constantId
             constIdCtx.type_ = enumType
 
-            constantId.appendLineNumber(ctx.start.getLine())
+            constantId.appendLineNumber(ctx.start.line)
 
         enumType.setEnumerationConstants(constants)
         ctx.type_ = enumType
@@ -295,8 +301,8 @@ class Semantics(GraspVisitor):
     def visitSubrangeTypespec(self, ctx):
         type = Typespec(Form.SUBRANGE)
         subCtx = ctx.subrangeType()
-        minCtx = subCtx.constant().get(0)
-        maxCtx = subCtx.constant().get(1)
+        minCtx = subCtx.constant()[0]
+        maxCtx = subCtx.constant()[1]
 
         minObj = self.visit(minCtx)
         maxObj = self.visit(maxCtx)
@@ -341,18 +347,20 @@ class Semantics(GraspVisitor):
 
         ctx.type_ = arrayType
 
+        # FIXME THIS CODE PORTION IS UNNECCESARY FOR OUR LANGUAGE - NO VARYING INDEX TYPES OR RANGES OF INDEX TYPE.
         # Loop over the array dimensions.
-        count = listCtx.simpleType().size()
+        count = len(listCtx.expression)  # simpleType().size()
         for i in range(0, count):
-            simpleCtx = listCtx.simpleType().get(i)
-            self.visit(simpleCtx)
-            arrayType.setArrayIndexType(simpleCtx.type)
-            arrayType.setArrayElementCount(self.typeCount(simpleCtx.type))
+            exprCtx = listCtx.simpleType()[i]
+
+            arrayType.setArrayIndexType(Predefined.integerType)
+            arrayType.setArrayElementCount(self.visit(exprCtx))
 
             if i < count - 1:
                 elementType = Typespec(Form.ARRAY)
                 arrayType.setArrayElementType(elementType)
                 arrayType = elementType
+        #  ---------------------------------------------------------------------------------
 
         self.visit(arrayCtx.typeSpecification())
         elementType = arrayCtx.typeSpecification().type_
@@ -386,13 +394,16 @@ class Semantics(GraspVisitor):
 
         # Loop over the variables being declared.
         for idCtx in listCtx.variableIdentifier():
-            lineNumber = idCtx.start.getLine()
-            variableName = idCtx.IDENTIFIER().getText().toLowerCase()
+            lineNumber = idCtx.start.line
+            variableName = idCtx.IDENTIFIER().getText().lower()
+            pat = re.compile("[a-zA-Z][a-zA-Z0-9]*")
+            if not pat.match(variableName):
+                self.error.flag(SemanticErrorHandler.Code.INVALID_VARIABLE, ctx)
             variableId = self.symTableStack.lookupLocal(variableName)
 
             if variableId is None:
                 variableId = self.symTableStack.enterLocal(variableName, Kind.VARIABLE)
-                variableId.setType(typeCtx.type)
+                variableId.setType(typeCtx.type_)
 
                 # Assign slot numbers to local variables.
                 symTable = variableId.getSymTable()
@@ -426,7 +437,7 @@ class Semantics(GraspVisitor):
         routineId = self.symTableStack.lookupLocal(routineName)
 
         if routineId is not None:
-            self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, ctx.start.getLine(), routineName)
+            self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, ctx.start.line, routineName)
             return None
 
         # this is an in line conditional in python - cool
@@ -475,54 +486,52 @@ class Semantics(GraspVisitor):
 
         self.visit(ctx.block().compoundStatement())
         routineId.setExecutable(ctx.block().compoundStatement())
-
-        self.symTableStack.pop()
+        print('here')
+        self.symTableStack._pop()
         return None
 
     def visitParameterDeclarationsList(self, ctx):
         parameterList = []
 
         # Loop over the parameter declarations.
-        for dclCtx in ctx.parameterDeclarations():
-            parameterSublist = self.visit(dclCtx)
-            parameterList.extend(parameterSublist)
+        for dclCtx in ctx.parameterDeclaration():
+            # parameterSublist = self.visit(dclCtx)
+            # parameterList.extend(parameterSublist)
+            parameter = self.visit(dclCtx)
+            parameterList.append(parameter)
 
         return parameterList
 
-    def visitParameterDeclarations(self, ctx):
+    def visitParameterDeclaration(self, ctx):
         kind = Kind.REFERENCE_PARAMETER if (ctx.VAR() is not None) else Kind.VALUE_PARAMETER  # kind
         typeCtx = ctx.typeIdentifier()
 
         self.visit(typeCtx)
         paramType = typeCtx.type_
+        # we have type now we just need the id
+        # parameterSublist = []
+        param = ctx.parameterIdentifier()
+        lineNumber = param.start.line
+        paramName = param.IDENTIFIER().getText().lower()
+        paramId = self.symTableStack.lookupLocal(paramName)
 
-        parameterSublist = []
+        if paramId is None:
+            paramId = self.symTableStack.enterLocal(paramName, kind)
+            paramId.setType(paramType)
 
-        # Loop over the parameter identifiers.
-        paramListCtx = ctx.parameterIdentifierList()  # TODO Our language does not have ParamID lists
-        for paramIdCtx in paramListCtx.parameterIdentifier():
-            lineNumber = paramIdCtx.start.getLine()
-            paramName = paramIdCtx.IDENTIFIER().getText().toLowerCase()
-            paramId = self.symTableStack.lookupLocal(paramName)
+            if (kind == Kind.REFERENCE_PARAMETER) and (self.mode != BackendMode.EXECUTOR) and (
+                    paramType.getForm() == Form.SCALAR):
+                self.error.flag(SemanticErrorHandler.Code.INVALID_REFERENCE_PARAMETER, param)
 
-            if paramId is None:
-                paramId = self.symTableStack.enterLocal(paramName, kind)
-                paramId.setType(paramType)
+        else:
+            self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, param)
 
-                if (kind == Kind.REFERENCE_PARAMETER) and (self.mode != BackendMode.EXECUTOR) and (
-                        paramType.getForm() == Form.SCALAR):
-                    self.error.flag(SemanticErrorHandler.Code.INVALID_REFERENCE_PARAMETER, paramIdCtx)
+        param.entry = paramId
+        param.type_ = paramType
 
-            else:
-                self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, paramIdCtx)
+        paramId.appendLineNumber(lineNumber)
 
-            paramIdCtx.entry = paramId
-            paramIdCtx.type_ = paramType
-
-            parameterSublist.append(paramId)
-            paramId.appendLineNumber(lineNumber)
-
-        return parameterSublist
+        return paramId
 
     # ? type checker converted?
     def visitAssignmentStatement(self, ctx: GraspParser.AssignmentStatementContext):
@@ -607,7 +616,7 @@ class Semantics(GraspVisitor):
                     if caseConstCtx.value in constants:
                         self.error.flag(SemanticErrorHandler.Code.DUPLICATE_CASE_CONSTANT, constCtx)
                     else:
-                        constants.add(caseConstCtx.value)  # TODO is it not append()?
+                        constants.append(caseConstCtx.value)  # TODO is it not append()?
 
             if stmtCtx is not None:
                 self.visit(stmtCtx)
@@ -650,7 +659,7 @@ class Semantics(GraspVisitor):
                     controlType == Predefined.stringType) or (len(varCtx.modifier()) != 0):
                 self.error.flag(SemanticErrorHandler.Code.INVALID_CONTROL_VARIABLE, varCtx)
         else:
-            self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx.start.getLine(),
+            self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx.start.line,
                             controlName)  # TODO getStart() or just start?
 
         startCtx = ctx.expression()[0]
@@ -673,7 +682,6 @@ class Semantics(GraspVisitor):
         name = ctx.procedureName().getText().lower()
         procedureId = self.symTableStack.lookup(name)
         badName = False
-
         if procedureId is None:
 
             self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, nameCtx)
@@ -698,15 +706,14 @@ class Semantics(GraspVisitor):
         return None
 
     def visitFunctionCallFactor(self, ctx):
-        callCtx = ctx.functionCall()
+        callCtx = ctx.functionCallStatement()
         nameCtx = callCtx.functionName()
         listCtx = callCtx.argumentList()
         name = callCtx.functionName().getText().lower()
         functionId = self.symTableStack.lookup(name)
+        identifierType = functionId.getKind()
         badName = False
-
         ctx.type_ = Predefined.integerType
-
         if functionId is None:
             self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, nameCtx)
             badName = True
@@ -740,7 +747,6 @@ class Semantics(GraspVisitor):
         if paramsCount != argsCount:
             self.error.flag(SemanticErrorHandler.Code.ARGUMENT_COUNT_MISMATCH, listCtx)
             return
-
         # Check each argument against the corresponding parameter.
 
         for i in range(paramsCount):
@@ -767,8 +773,16 @@ class Semantics(GraspVisitor):
             # assignment compatible with the parameter type.
 
             elif not TypeChecker.areAssignmentCompatible(paramType, argType):
-
-                self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, exprCtx)
+                if paramType == Predefined.realType:
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, exprCtx)
+                elif paramType == Predefined.integerType:
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, exprCtx)
+                elif paramType == Predefined.booleanType:
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, exprCtx)
+                elif paramType == Predefined.stringType:
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_STRING, exprCtx)
+                else:
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, exprCtx)
 
     def expression_is_variable(self, expr_ctx):
         # Only a single simple expression?
@@ -827,8 +841,8 @@ class Semantics(GraspVisitor):
 
         # Loop over any subsequent terms.
         for i in range(1, count):
-            op = ctx.addOp().get(i - 1).getText().lower()  # TODO get?
-            termCtx2 = ctx.term().get(i)  # TODO get?
+            op = ctx.addOp()[i - 1].getText().lower()  # TODO get?
+            termCtx2 = ctx.term()[i]  # TODO get?
             self.visit(termCtx2)
             termType2 = termCtx2.type_
 

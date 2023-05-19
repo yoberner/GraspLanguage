@@ -70,11 +70,11 @@ def main(args):
     parser.addErrorListener(syntax_error_handler)
     tree = parser.program()
 
-    error_count = syntax_error_handler.get_count()
-    if error_count > 0:
-        print(f"\nThere were {error_count} syntax errors.")
-        print("Object file not created or modified.")
-        return
+    # error_count = syntax_error_handler.get_count()
+    # if error_count > 0:
+    #     print(f"\nThere were {error_count} syntax errors.")
+    #     print("Object file not created or modified.")
+    #     return
 
     # Pass 2: Semantic operations.
     pass2 = Semantics(mode)

@@ -71,7 +71,7 @@ class Predefined:
         Predefined.integerId.setType(Predefined.integerType)
 
         # // Type real.
-        Predefined.realId = symTableStack.enterLocal("real", Kind.TYPE)
+        Predefined.realId = symTableStack.enterLocal("decimal", Kind.TYPE)
         Predefined.realType = Typespec(Form.SCALAR)
         Predefined.realType.setIdentifier(Predefined.realId.getName(), Predefined.realId.getSymTable())
         Predefined.realId.setType(Predefined.realType)
