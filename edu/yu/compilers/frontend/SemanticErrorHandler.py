@@ -2,8 +2,6 @@ from enum import Enum
 from multipledispatch import dispatch
 from antlr4 import ParserRuleContext
 
-from GraspParser import GraspParser
-
 
 class SemanticErrorHandler:
     class Code(Enum):

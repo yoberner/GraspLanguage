@@ -1,5 +1,5 @@
 # Convert Pascal programs to Java.
-from GraspVisitor import GraspVisitor
+from gen.GraspVisitor import GraspVisitor
 
 
 class Converter(GraspVisitor):
