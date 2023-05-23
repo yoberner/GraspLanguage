@@ -168,12 +168,12 @@ class Typespec:
     # @return the base type of its final dimension.
 
     def getArrayBaseType(self):
-        elemType = self
+        # elemType = None
+        #
+        # while self.form == Form.ARRAY:
+        #     elemType = elemType.getArrayElementType()
 
-        while elemType.form == self.ARRAY:
-            elemType = elemType.getArrayElementType()
-
-        return elemType.baseType()
+        return self.baseType()
 
     # Get the record's symbol table.
     # @return the symbol table.

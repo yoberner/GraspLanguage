@@ -48,10 +48,18 @@ typeSpecification   locals [ Typespec type = None ]
 
 simpleType          locals [ Typespec type = None ]
     : typeIdentifier    # typeIdentifierTypespec
+    | enumerationType   # enumerationTypespec
     ;
 
+enumerationType     : '(' enumerationConstant ( ',' enumerationConstant )* ')' ;
+enumerationConstant : constantIdentifier ;
+
 arrayType
-    : (simpleType | recordType) arrayDimensionList ;
+    :  arrayElemType arrayDimensionList  ;
+arrayElemType locals [ Typespec type = None ]
+                : simpleType
+                | recordType
+                ;
 arrayDimensionList : '[' expression ']' ('[' expression ']')* ;
 
 recordType          locals [ SymTableEntry entry = None ]
@@ -67,7 +75,7 @@ variableIdentifier  locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
 
 routinesPart      : routineDefinition ( ';' routineDefinition)* ;
-routineDefinition : ( functionHead ) block ;
+routineDefinition : ( functionHead ) '{' block '}';
 functionHead      : FUNCTION  routineIdentifier parameters? RETURNS typeIdentifier ;
 
 routineIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
@@ -75,8 +83,8 @@ routineIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
 
 parameters                : '(' parameterDeclarationsList ')' ;
 parameterDeclarationsList : parameterDeclaration ( ',' parameterDeclaration )* ;
-parameterDeclaration     : VAR? typeIdentifier parameterIdentifier ;
-
+parameterDeclaration     : VAR? typeIdentifier paramTypeMod* parameterIdentifier ;
+paramTypeMod: '['']' ;
 
 parameterIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;
@@ -110,7 +118,7 @@ lhs locals [ Typespec type = None ]
     : variable ;
 rhs : expression ;
 
-ifStatement    : IF expression IS TRUE DO trueStatement ( ELSE falseStatement )? ;
+ifStatement    : IF expression IS 'TRUE' DO trueStatement ( ELSE falseStatement )? ;
 trueStatement  : statement ;
 falseStatement : statement ;
 
@@ -125,7 +133,7 @@ caseConstantList : caseConstant ( ',' caseConstant )* ;
 caseConstant    locals [ Typespec type = None, Object value = None ]
     : constant ;
 
-whileStatement  : WHILE expression IS TRUE KEEP DOING statement ;
+whileStatement  : WHILE expression IS 'TRUE' KEEP DOING statement ;
 
 forStatement : FOR INDEX variable START AT expression AND WHILE expression
                KEEP DOING statement UPDATE assignmentStatement ';' ;
@@ -185,7 +193,6 @@ integerConstant : INTEGER ;
 decConstant     : DECIMAL;
 characterConstant : CHARACTER ;
 stringConstant    : STRING ;
-booleanConstant   : BOOLEAN ;
        
 relOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
 addOp : '+' | '-' | OR ;
@@ -235,7 +242,6 @@ OR        : O R ;
 NOT       : N O T ;
 IF        : I F ;
 IS        : I S ;
-TRUE      : T R U E ;
 JUST      : J U S T ;
 THIS      : T H I S ;
 THEN      : T H E N ;
@@ -270,7 +276,6 @@ RETURN    : R E T U R N ;
 
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9]*;
 INTEGER    : [0-9]+ ;
-BOOLEAN    : [0-1] ;
 
 DECIMAL    : INTEGER '.' INTEGER
            | INTEGER ('e' | 'E') ('+' | '-')? INTEGER

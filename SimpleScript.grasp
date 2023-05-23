@@ -1,14 +1,12 @@
 program SimpleScript;
 
-// FINAL {
-
+ //FINAL {
 // //These lines should throw re-declared id errors for constants, types, enums, routines, and params
 // integer finalX = 5;
 // integer finalX = 6;
 // }
 
 // TYPE {
-// 
 // 	Person = blueprint {
 // 		integer id;
 // 		String name;
@@ -24,6 +22,8 @@ program SimpleScript;
  var {
     // decimal invalid]ConstantName;
     integer i;
+    //i z; //invalid type
+ //   Person p;
     boolean b;
 //  integer b;
 // 	integer i, j, k, l;
@@ -31,12 +31,19 @@ program SimpleScript;
 // 	boolean b;
 // 	character c;
 // 	string s;
-// 	integer[] rankings;
+ //	integer[] rankings;
  }
- FUNCTION cube(integer x) returns integer {
- 	integer cube = x * x * x;
- 	return cube;
- }
+
+// FUNCTION cube(integer x) returns integer {
+// 	var {
+// 	    boolean bob;
+// 	}
+// 	DO {
+//        integer cube = x * x * x;
+//        bob = true;
+//        return bob;
+// 	}
+// }
 //
 // FUNCTION cube(integer x) returns integer {
 // 	integer cube = x * x * x;
@@ -45,9 +52,14 @@ program SimpleScript;
 
 DO {
     // These lines should throw Undeclared Identifier errors - try each one individually
-    // undeclaredVariable = 5;
+     // undeclaredVariable = 5;
     // undeclaredFunction();
-    i = cube(b + 5);
+   // b = p.nonExistentField;
+   //  i = cube(5, 6);
+  //  i = i(5)
+  //i = b + i
+  //i = rankings[0][1];
+  b = i AND i;
 
 
 

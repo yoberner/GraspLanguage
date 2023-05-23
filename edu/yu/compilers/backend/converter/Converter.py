@@ -1,13 +1,19 @@
 # Convert Pascal programs to Java.
+import io
+
+from edu.yu.compilers.backend.converter.CodeGenerator import CodeGenerator
+from edu.yu.compilers.intermediate.symtable.Kind import Kind
+from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
+from edu.yu.compilers.intermediate.symtable.SymTable import SymTable
+from edu.yu.compilers.intermediate.type.Form import Form
 from gen.GraspVisitor import GraspVisitor
 
 
 class Converter(GraspVisitor):
-
     # Map a Pascal datatype name to the Java datatype name.
     type_name_table = {
         "integer": "int",
-        "real": "double",
+        "decimal": "double",
         "boolean": "boolean",
         "char": "char",
         "string": "String",
@@ -23,151 +29,54 @@ class Converter(GraspVisitor):
     def get_program_name(self):
         return self.program_name
 
-    def visitRoutineDefinition(self, ctx):
-        return None
-
-    def visit_case_statement(self, ctx):
-        var_name = self.visit(ctx.expression())
-        self.code.emit_line(f"switch ({var_name}) {{")
-        self.code.indent()
-
-        for branch in ctx.caseBranchList().caseBranch():
-            if branch.caseConstantList() is None:
-                continue
-
-            self.code.emit_start("case ")
-            obj1 = branch.caseConstantList().caseConstant(0)
-            str1 = obj1.getText()
-            if obj1.type == Predefined.stringType:
-                str1 = "\"" + self.convert_string(str1) + "\""
-            self.code.emit(str1)
-
-            for i in range(1, len(branch.caseConstantList().caseConstant())):
-                if branch.caseConstantList() is None:
-                    continue
-
-                obj2 = branch.caseConstantList().caseConstant(i)
-                str2 = obj2.getText()
-                if obj2.type == Predefined.stringType:
-                    str2 = "\"" + self.convert_string(str2) + "\""
-                self.code.emit(", " + str2)
-
-            self.code.emit_line(":")
-            self.visit(branch.statement())
-            self.code.emit_line("break;")
-
-        self.code.dedent()
-        self.code.emit_line("}")
-
-        return None
-
-    def visitForStatement(self, ctx):
-        self.code.emitStart("for (")
-        varName = ctx.variable().getText()
-        self.code.emit(f"int {varName} = ")
-        self.code.emit(visit(ctx.expression(0)).toString())
-        self.code.emit("; ")
-
-        self.code.emitStart(varName)
-
-        upto = ctx.TO() != None
-        if upto:
-            self.code.emit(" <= ")
-        else:
-            self.code.emit(" >= ")
-
-        self.code.emit(visit(ctx.expression(1)).toString())
-        self.code.emit("; ")
-
-        self.code.emitStart(varName)
-
-        if upto:
-            self.code.emitEnd("++)")
-        else:
-            self.code.emitEnd("--)")
-
-        self.code.emitLine("{")
-        self.code.indent()
-        self.visit(ctx.statement())
-        self.code.dedent()
-        self.code.emitLine("}")
-
-        return None
-
-    def visitIfStatement(self, ctx):
-        self.code.emitLine(f"if ({self.visit(ctx.expression())})")
-        self.code.emitLine("{")
-        self.code.indent()
-        self.visit(ctx.trueStatement())
-        self.code.dedent()
-        self.code.emitLine("}")
-
-        if ctx.ELSE() is not None:
-            self.code.emitLine("else")
-            self.code.emitLine("{")
-            self.code.indent()
-            self.visit(ctx.falseStatement())
-            self.code.dedent()
-            self.code.emitLine("}")
-
-        return None
-
-
-    def visitWhileStatement(self, ctx):
-        self.code.emitLine(f"while ({ctx.expression().getText()})")
-        self.code.emitLine("{")
-        self.code.indent()
-        self.visit(ctx.statement())
-        self.code.dedent()
-        self.code.emitLine("}")
-
-        return None
+    # def visitRoutineDefinition(self, ctx):
+    #     return None
 
     def visitProgram(self, ctx):
         sw = io.StringIO()
         self.code = CodeGenerator(sw)
 
-        self.visit(ctx.programHeader)
+        self.visit(ctx.programHeader())
 
         # Execution timer and runtime standard input.
         self.code.indent()
-        self.code.emitLine("private static java.util.Scanner _sysin = " +
+        self.code.emit_line("private static java.util.Scanner _sysin = " +
                             "new java.util.Scanner(System.in);")
-        self.code.emitLine()
+        self.code.emit_line()
 
         # Level 1 declarations.
-        idCtx = ctx.programHeader.programIdentifier
-        self.visit(ctx.block.declarations)
+        idCtx = ctx.programHeader().programIdentifier()
+        self.visit(ctx.block().declarations())
         self.emitUnnamedRecordDefinitions(idCtx.entry.getRoutineSymTable())
 
         # Main.
-        self.code.emitLine()
-        self.code.emitLine("public static void main(String[] args)")
-        self.code.emitLine("{")
+        self.code.emit_line()
+        self.code.emit_line("public static void main(String[] args)")
+        self.code.emit_line("{")
         self.code.indent()
 
         # Allocate structured data.
         self.emitAllocateStructuredVariables("", idCtx.entry.getRoutineSymTable())
-        self.code.emitLine()
+        self.code.emit_line()
 
         # Main compound statement.
-        self.visit(ctx.block.compoundStatement.statementList)
+        self.visit(ctx.block().compoundStatement().statementList())
 
         self.code.dedent()
-        self.code.emitLine("}")
+        self.code.emit_line("}")
 
         self.code.dedent()
-        self.code.emitLine("}")
-
+        self.code.emit_line("}")
+        result = sw.getvalue()
         self.code.close()
-        return sw.getvalue()
+        return result
 
     def visitProgramHeader(self, ctx):
         programName = ctx.programIdentifier().entry.getName()
 
         # Emit the Python program class.
-        self.code.emitLine(f"class {programName}:")
-        self.code.indent()
+        self.code.emit_line(f"public class {programName}")
+        self.code.emit_line("{")
 
         return None
 
@@ -175,20 +84,20 @@ class Converter(GraspVisitor):
         idCtx = ctx.constantIdentifier()
         constCtx = ctx.constant()
         constantName = idCtx.entry.getName()
-        type = constCtx.type
-        pascalTypeName = type.getIdentifier().getName()
-        javaTypeName = self.typeNameTable[pascalTypeName]
+        type_ = constCtx.type_
+        graspTypeName = type_.getName()
+        javaTypeName = self.type_name_table[graspTypeName]
 
-        self.code.emitStart()
+        self.code.emit_start()
 
-        if self.programVariables:
+        if self.program_variables:
             self.code.emit("global ")
-        self.code.emitEnd(f"{constantName} = {constCtx.getText()}")
+        self.code.emit_end(f"final {javaTypeName} {constantName} = {constCtx.getText()};")
 
         # Java version:
         # if self.programVariables:
         #     self.code.emit("private static ")
-        # self.code.emitEnd("final " + javaTypeName + " " + constantName + " = " + constCtx.getText() + ";")
+        # self.code.emit_end("final " + javaTypeName + " " + constantName + " = " + constCtx.getText() + ";")
 
         return None
 
@@ -196,70 +105,70 @@ class Converter(GraspVisitor):
         idCtx = ctx.typeIdentifier()
         typeName = idCtx.entry.getName()
         typeCtx = ctx.typeSpecification()
-        form = typeCtx.type.getForm()
+        form = typeCtx.type_.getForm()
 
-        if form == ENUMERATION:
-            self.code.emitStart()
-            if self.programVariables:
+        if form == Form.ENUMERATION:
+            self.code.emit_start()
+            if self.program_variables:
                 self.code.emit("private static ")
             self.code.emit("enum " + typeName)
             self.visit(typeCtx)
-        elif form == RECORD:
-            self.code.emitStart()
-            if self.programVariables:
+        elif form == Form.RECORD:
+            self.code.emit_start()
+            if self.program_variables:
                 self.code.emit("public static ")
-            self.code.emitEnd("class " + typeName)
-            self.code.emitLine("{")
+            self.code.emit_end("class " + typeName)
+            self.code.emit_line("{")
             self.code.indent()
 
-            self.emitUnnamedRecordDefinitions(typeCtx.type.getRecordSymTable())
+            self.emitUnnamedRecordDefinitions(typeCtx.type_.getRecordSymTable())
             self.visit(typeCtx)
 
             self.code.dedent()
-            self.code.emitLine("}")
-            self.code.emitLine()
+            self.code.emit_line("}")
+            self.code.emit_line()
 
         return None
 
-    def visitEnumerationTypespec(self, ctx):
-        separator = " {"
+    # def visitEnumerationTypespec(self, ctx):
+    #     separator = " {"
+    #
+    #     for constCtx in ctx.enumerationType().enumerationConstant():
+    #         self.code.emit(separator + constCtx.constantIdentifier().entry.getName())
+    #         separator = ", "
+    #
+    #     self.code.emit_end("};")
+    #     return None
 
-        for constCtx in ctx.enumerationType().enumerationConstant():
-            self.code.emit(separator + constCtx.constantIdentifier().entry.getName())
-            separator = ", "
-
-        self.code.emitEnd("};")
-        return None
-
-    def emitUnnamedRecordDefinitions(symTable):
+    def emitUnnamedRecordDefinitions(self, symTable):
         for id in symTable.sortedEntries():
-            if (id.getKind() == TYPE) and (id.getType().getForm() == RECORD) and (id.getName().startswith(SymTable.UNNAMED_PREFIX)):
-                code.emitStart()
-                if programVariables:
-                    code.emit("public static ")
-                code.emitEnd("class " + id.getName())
-                code.emitLine("{")
-                code.indent()
-                emitRecordFields(id.getType().getRecordSymTable())
-                code.dedent()
-                code.emitLine("}")
-                code.emitLine()
+            if (id.getKind() == Kind.TYPE) and (id.getType().getForm() == Form.RECORD) and (
+                    id.getName().startswith(SymTable.UNNAMED_PREFIX)):
+                self.code.emit_start()
+                if self.program_variables:
+                    self.code.emit("public static ")
+                self.code.emit_end("class " + id.getName())
+                self.code.emit_line("{")
+                self.code.indent()
+                self.emitRecordFields(id.getType().getRecordSymTable())
+                self.code.dedent()
+                self.code.emit_line("}")
+                self.code.emit_line()
 
-
-    def emitRecordFields(symTable):
-        emitUnnamedRecordDefinitions(symTable)
+    def emitRecordFields(self, symTable):
+        self.emitUnnamedRecordDefinitions(symTable)
 
         for fieldId in symTable.sortedEntries():
-            if fieldId.getKind() == RECORD_FIELD:
-                code.emitStart(typeName(fieldId.getType()))
-                code.emit(" " + fieldId.getName())
-                code.emitEnd(";")
+            if fieldId.getKind() == Kind.RECORD_FIELD:
+                self.code.emit_start(self.typeName(fieldId.getType()))
+                self.code.emit(" " + fieldId.getName())
+                self.code.emit_end(";")
 
     def visitRecordTypespec(self, ctx):
         fieldsCtx = ctx.recordType().recordFields()
-        self.recordFields = True
+        self.record_fields = True
         self.visit(fieldsCtx.variableDeclarationsList())
-        self.recordFields = False
+        self.record_fields = False
         return None
 
     def visitVariableDeclarations(self, ctx):
@@ -267,53 +176,87 @@ class Converter(GraspVisitor):
         listCtx = ctx.variableIdentifierList()
 
         for varCtx in listCtx.variableIdentifier():
-            self.code.emitStart()
-            if self.programVariables and not self.recordFields:
+            self.code.emit_start()
+            if self.program_variables and not self.record_fields:
                 self.code.emit("private static ")
-            self.code.emit(typeName(typeCtx.type))
+            self.code.emit(self.typeName(typeCtx.type_))
             self.code.emit(" " + varCtx.entry.getName())
-            if typeCtx.type.getForm() == ARRAY:
-                self.emitArraySpecifier(typeCtx.type)
-            self.code.emitEnd(";")
+            if typeCtx.type_.getForm() == Form.ARRAY:
+                self.emitArraySpecifier(typeCtx.type_)
+            self.code.emit_end(";")
 
         return None
 
-def emitArraySpecifier(self, pascalType):
-    brackets = ""
+    def emitArraySpecifier(self, graspType):
+        brackets = ""
 
-    while pascalType.getForm() == ARRAY:
-        brackets += "[]"
-        pascalType = pascalType.getArrayElementType()
+        while graspType.getForm() == Form.ARRAY:
+            brackets += "[]"
+            graspType = graspType.getArrayElementType()
 
-    self.code.emit(brackets)
+        self.code.emit(brackets)
 
-def typeName(self, pascalType):
-    form = pascalType.getForm()
-    typeId = pascalType.getIdentifier()
-    pascalTypeName = typeId.getName() if typeId is not None else None
+    def typeName(self, graspType):
+        form = graspType.getForm()
+        graspTypeName = graspType.getName()
 
-    if form == ARRAY:
-        elemType = pascalType.getArrayBaseType()
-        pascalTypeName = elemType.getIdentifier().getName()
-        javaTypeName = self.typeNameTable.get(pascalTypeName)
-        return javaTypeName if javaTypeName is not None else pascalTypeName
-    elif form == SUBRANGE:
-        baseType = pascalType.baseType()
-        pascalTypeName = baseType.getIdentifier().getName()
-        return self.typeNameTable.get(pascalTypeName)
-    elif form == ENUMERATION:
-        return pascalTypeName if pascalTypeName is not None else "int"
-    elif form == RECORD:
-        return pascalTypeName
-    else:
-        return self.typeNameTable.get(pascalTypeName)
+        if form == Form.ARRAY:
+            elemType = graspType.getArrayElementType()
+            graspTypeName = elemType.getName()
+            javaTypeName = self.type_name_table.get(graspTypeName)
+            return javaTypeName if javaTypeName is not None else graspTypeName
+        elif form == Form.SUBRANGE:
+            baseType = graspType.baseType()
+            graspTypeName = baseType.getName()
+            return self.type_name_table.get(graspTypeName)
+        elif form == Form.ENUMERATION:
+            return graspTypeName if graspTypeName is not None else "int"
+        elif form == Form.RECORD:
+            return graspTypeName
+        else:
+            return self.type_name_table.get(graspTypeName)
 
     def visitTypeIdentifier(self, ctx):
-        pascalType = ctx.type
-        javaTypeName = self.typeName(pascalType)
+        graspType = ctx.type_
+        javaTypeName = self.typeName(graspType)
         self.code.emit(javaTypeName)
 
         return None
+
+    # def visit_case_statement(self, ctx):
+    #     var_name = self.visit(ctx.expression())
+    #     self.code.emit_line(f"switch ({var_name}) {{")
+    #     self.code.indent()
+    #
+    #     for branch in ctx.caseBranchList().caseBranch():
+    #         if branch.caseConstantList() is None:
+    #             continue
+    #
+    #         self.code.emit_start("case ")
+    #         obj1 = branch.caseConstantList().caseConstant(0)
+    #         str1 = obj1.getText()
+    #         if obj1.type_ == Predefined.stringType:
+    #             str1 = "\"" + self.convert_string(str1) + "\""
+    #         self.code.emit(str1)
+    #
+    #         for i in range(1, len(branch.caseConstantList().caseConstant())):
+    #             if branch.caseConstantList() is None:
+    #                 continue
+    #
+    #             obj2 = branch.caseConstantList().caseConstant(i)
+    #             str2 = obj2.getText()
+    #             if obj2.type_ == Predefined.stringType:
+    #                 str2 = "\"" + self.convert_string(str2) + "\""
+    #             self.code.emit(", " + str2)
+    #
+    #         self.code.emit_line(":")
+    #         self.visit(branch.statement())
+    #         self.code.emit_line("break;")
+    #
+    #     self.code.dedent()
+    #     self.code.emit_line("}")
+    #
+    #     return None
 
     def visitVariableIdentifierList(self, ctx):
         separator = " "
@@ -325,160 +268,240 @@ def typeName(self, pascalType):
 
         return None
 
-    def emitAllocateStructuredVariables(lhsPrefix, symTable):
+    def emitAllocateStructuredVariables(self, lhsPrefix, symTable):
         for id in symTable.sortedEntries():
-            if id.getKind() == VARIABLE:
-                emitAllocateStructuredData(lhsPrefix, id)
+            if id.getKind() == Kind.VARIABLE:
+                self.emitAllocateStructuredData(lhsPrefix, id)
 
-    def emitAllocateStructuredData(lhsPrefix, variableId):
+    def emitAllocateStructuredData(self, lhsPrefix, variableId):
         variableType = variableId.getType()
         form = variableType.getForm()
         variableName = variableId.getName()
 
-        if form == ARRAY:
-            code.emitStart(lhsPrefix + variableName + " = ")
-            elemType = emitNewArray(variableType)
-            code.emitEnd(";")
+        if form == Form.ARRAY:
+            declarationPart = lhsPrefix + str(variableName) + " = "
+            self.code.emit_start(declarationPart)
+            elemType = self.emitNewArray(variableType)
+            self.code.emit_end(";")
 
             if elemType.isStructured():
-                emitNewArrayElement(lhsPrefix, variableName, variableType)
-        elif form == RECORD:
-            code.emitStart(lhsPrefix + variableName + " = ")
-            emitNewRecord(lhsPrefix, variableName, variableType)
+                self.emitNewArrayElement(lhsPrefix, variableName, variableType)
+        elif form == Form.RECORD:
+            self.code.emit_start(lhsPrefix + variableName + " = ")
+            self.emitNewRecord(lhsPrefix, variableName, variableType)
 
-    def emitNewArray(type):
+    def emitNewArray(self, type_):
         sizes = ""
-        while type.getForm() == ARRAY:
-            sizes += "[" + str(type.getArrayElementCount()) + "]"
-            type = type.getArrayElementType()
+        while type_.getForm() == Form.ARRAY:
+            sizes += "[" + str(type_.getArrayElementCount()) + "]"
+            type_ = type_.getArrayElementType()
 
-        type = type.baseType()
-        pascalTypeName = type.getIdentifier().getName()
-        javaTypeName = typeNameTable.get(pascalTypeName)
+        type_ = type_.baseType()
+        graspTypeName = type_.getName()
+        javaTypeName = self.type_name_table.get(graspTypeName)
+
         if javaTypeName is None:
-            javaTypeName = pascalTypeName
-        code.emit("new " + javaTypeName + sizes)
+            javaTypeName = graspTypeName
+        self.code.emit("new " + javaTypeName + sizes)
 
-        return type
+        return type_
 
-    def emitNewArrayElement(lhsPrefix, variableName, elemType):
+    def emitNewArrayElement(self, lhsPrefix, variableName, elemType):
         dimensionCount = 0
         variableNameBuilder = variableName
 
-        while elemType.getForm() == ARRAY:
+        #  TODO THIS IS NOT A DO WHILE LOOP AS IN THE JAVA CODE MIGHT BE IMPORTANT
+        while elemType.getForm() == Form.ARRAY:
             elemCount = elemType.getArrayElementCount()
             dimensionCount += 1
             subscript = "_i" + str(dimensionCount)
             variableNameBuilder += "[" + subscript + "]"
 
-            code.emitLine("for " + subscript + " in range(" + str(elemCount) + "):")
-            code.emitStart()
-            code.indent()
+            self.code.emit_line(
+                "for (int " + subscript + " = 0; " + subscript + " < " + str(elemCount) + "; " + subscript + "++)")
+            self.code.emit_start("{")
+            self.code.indent()
 
             elemType = elemType.getArrayElementType()
 
-        variableName = variableNameBuilder
+        typeName = elemType.getName()
+        self.code.emit_start(lhsPrefix + variableName + " = new" + typeName + "()")
+        self.code.emit_end(";")
 
-        typeName = elemType.getIdentifier().getName()
-        code.emitStart(lhsPrefix + variableName + " = " + typeName + "()")
-        code.emitEnd()
+        self.emitNewRecordFields(lhsPrefix + variableName + ".", elemType)
 
-        emitNewRecordFields(lhsPrefix + variableName + ".", elemType)
-
+        dimensionCount -= 1
         while dimensionCount > 0:
-            code.dedent()
-            code.emitLine("}")
+            self.code.dedent()
+            self.code.emit_line("}")
             dimensionCount -= 1
 
-    def emitNewRecord(lhsPrefix, variableName, recordType):
+    def emitNewRecord(self, lhsPrefix, variableName, recordType):
         typePath = recordType.getRecordTypePath()
         index = typePath.index('$')
 
         # Don't include the program name in the record type path.
         # Replace each $ with a period.
         typePath = typePath[index + 1:].replace('$', '.')
-        code.emit("new " + typePath + "()")
+        self.code.emit("new " + typePath + "()")
 
-        emitNewRecordFields(lhsPrefix + variableName + ".", recordType)
+        self.emitNewRecordFields(lhsPrefix + variableName + ".", recordType)
 
-    def emitNewRecordFields(lhsPrefix, recordType):
+    def emitNewRecordFields(self, lhsPrefix, recordType):
         for fieldId in recordType.getRecordSymTable().sortedEntries():
-            if fieldId.getKind() == RECORD_FIELD:
-                type = fieldId.getType()
+            if fieldId.getKind() == Kind.RECORD_FIELD:
+                type_ = fieldId.getType()
 
-                if type.isStructured():
-                    emitAllocateStructuredData(lhsPrefix, fieldId)
+                if type_.isStructured():
+                    self.emitAllocateStructuredData(lhsPrefix, fieldId)
 
-    def visitStatementList(ctx):
+    def visitStatementList(self, ctx):
         for stmtCtx in ctx.statement():
             if stmtCtx.emptyStatement() is None:
-                code.emitStart()
-                visit(stmtCtx)
+                self.code.emit_start()
+                self.visit(stmtCtx)
         return None
 
-    def visitCompoundStatement(ctx):
-        code.emit("{")
-        code.indent()
-        visitChildren(ctx)
-        code.dedent()
-        code.emitLine("}")
+    def visitCompoundStatement(self, ctx):
+        self.code.emit("{")
+        self.code.indent()
+        self.visitChildren(ctx)
+        self.code.dedent()
+        self.code.emit_line("}")
         return None
 
-    def visitAssignmentStatement(ctx):
-        lhs = visit(ctx.lhs().variable())
-        expr = visit(ctx.rhs().expression())
-        code.emit(lhs + " = " + expr)
-        code.emitEnd(";")
+    def visitAssignmentStatement(self, ctx):
+        lhs = self.visit(ctx.lhs().variable())
+        expr = self.visit(ctx.rhs().expression())
+        self.code.emit(lhs + " = " + expr)
+        self.code.emit_end(";")
         return None
 
-    def visitRepeatStatement(ctx):
-        needBraces = len(ctx.statementList().statement()) > 1
+    # def visitRepeatStatement(self, ctx):
+    #     needBraces = len(ctx.statementList().statement()) > 1
+    #
+    #     self.code.emit("do")
+    #     if needBraces:
+    #         self.code.emit_line("{")
+    #     self.code.indent()
+    #
+    #     self.visit(ctx.statementList())
+    #
+    #     self.code.dedent()
+    #     if needBraces:
+    #         self.code.emit_line("}")
+    #
+    #     self.code.emit_start("while (not (")
+    #     self.code.emit(visit(ctx.expression()))
+    #     self.code.emit_end("));")
+    #
+    #     return None
 
-        code.emit("do")
-        if needBraces:
-            code.emitLine("{")
-        code.indent()
+    def visitFunctionHead(self, ctx):
+        funcName = str(ctx.routineIdentifier().IDENTIFIER())
+        self.code.emit("private static ")
+        self.visit(ctx.typeIdentifier())
+        self.code.emit(" " + funcName + "(")
 
-        visit(ctx.statementList())
+        if ctx.parameters() is not None:
+            #
+            parameterDeclarations = ctx.parameters().parameterDeclarationsList().parameterDeclaration()  # TODO YOULL NEED TO CHANGE THIS
+            i = 0
+            while i < len(parameterDeclarations):  # TODO CHANGED TO REG WHILE MIGHT NEED TO FIX
+                paramDec = parameterDeclarations[i]
+                parameterIdentifier = paramDec.parameterIdentifier()
+                self.visit(paramDec.typeIdentifier())  # type
+                if paramDec.paramTypeMod() is not None:
+                    self.code.emit('[]')
+                self.code.emit(" " + str(parameterIdentifier.IDENTIFIER()))
+                if i < len(parameterDeclarations) - 1:
+                    self.code.emit(", ")
+                i += 1
 
-        code.dedent()
-        if needBraces:
-            code.emitLine("}")
+        self.code.emit("){")
+        return None
 
-        code.emitStart("while (not (")
-        code.emit(visit(ctx.expression()))
-        code.emitEnd("));")
+    # def visitProcedureCallStatement(self, ctx):
+    #     procNameCtx = ctx.procedureName()
+    #     procedureName = procNameCtx.entry.getName()
+    #
+    #     self.code.emit(procedureName)
+    #     self.code.emit("(")
+    #
+    #     if ctx.argumentList() is not None:
+    #         self.code.emit(visit(ctx.argumentList()))
+    #
+    #     self.code.emit_end(");")
+    #     return None
+
+    def visitForStatement(self, ctx):
+        needBraces = ctx.statement().compoundStatement() is not None
+        initialStmt = self.visit(ctx.variable()) + " = " + self.visit(ctx.expression(0))
+        limit = self.visit(ctx.expression(1))
+        updateString = self.visit(ctx.variable()) + "++" #  TODO NEED TO FIX
+        self.code.emit("for ( " + initialStmt + "; " + limit + "; " + updateString + ")")
+        if not needBraces:
+            self.code.indent()
+        self.code.emit_start()
+        self.visit(ctx.statement())
+        if not needBraces:
+            self.code.dedent()
+        return None
+
+    # TODO every visit result needs to be casted to string
+    def visitIfStatement(self, ctx):
+        needBraces = ctx.trueStatement().statement().compoundStatement() is not None
+        condition = str(self.visit(ctx.expression()))
+        self.code.emit("if (" + condition + ")")
+        if not needBraces:
+            self.code.indent()
+
+        self.code.emit_start()
+        self.visit(ctx.trueStatement())
+        if not needBraces:
+            self.code.dedent()
+        if ctx.falseStatement() is not None:
+            needBraces = ctx.falseStatement().statement().compoundStatement() is not None
+            self.code.emit_start("else ")
+            if needBraces:
+                self.code.emit("{")
+
+            if not needBraces:
+                self.code.indent()
+            self.code.emit_start()
+            self.visit(ctx.falseStatement())
+            if not needBraces:
+                self.code.dedent()
+            if needBraces:
+                self.code.emit("}")
 
         return None
 
-    def visitProcedureCallStatement(ctx):
-        procNameCtx = ctx.procedureName()
-        procedureName = procNameCtx.entry.getName()
+    def visitWhileStatement(self, ctx):
+        self.code.emit_line(f"while ({ctx.expression().getText()})")
+        self.code.emit_line("{")
+        self.code.indent()
+        self.visit(ctx.statement())
+        self.code.dedent()
+        self.code.emit_line("}")
 
-        code.emit(procedureName)
-        code.emit("(")
-
-        if ctx.argumentList() is not None:
-            code.emit(visit(ctx.argumentList()))
-
-        code.emitEnd(");")
         return None
 
-    def visitArgumentList(ctx):
+    def visitArgumentList(self, ctx):
         text = ""
         separator = ""
 
         for argCtx in ctx.argument():
             text += separator
-            text += visit(argCtx.expression())
+            text += str(self.visit(argCtx.expression()))
             separator = ", "
 
         return text
 
-    def visitExpression(ctx):
+    def visitExpression(self, ctx):
         simpleCtx1 = ctx.simpleExpression()[0]
         relOpCtx = ctx.relOp()
-        simpleText1 = visit(simpleCtx1)
+        simpleText1 = str(self.visit(simpleCtx1))
         text = simpleText1
 
         # Second simple expression?
@@ -491,17 +514,17 @@ def typeName(self, pascalType):
                 op = "!="
 
             simpleCtx2 = ctx.simpleExpression()[1]
-            simpleText2 = visit(simpleCtx2)
+            simpleText2 = str(self.visit(simpleCtx2))
 
             # Python uses the == operator for strings.
-            if simpleCtx1.type == Predefined.stringType:
-                text = "(" + simpleText1 + ")." + "compare(" + simpleText2 + ") " + op + " 0"
+            if simpleCtx1.type_ == Predefined.stringType:
+                text = "(" + simpleText1 + ")." + "compareTo(" + simpleText2 + ") " + op + " 0"
             else:
                 text = simpleText1 + " " + op + " " + simpleText2
 
         return text
 
-    def visitSimpleExpression(ctx):
+    def visitSimpleExpression(self, ctx):
         count = len(ctx.term())
         text = ""
 
@@ -511,7 +534,7 @@ def typeName(self, pascalType):
         # Loop over the simple expressions.
         for i in range(count):
             termCtx = ctx.term()[i]
-            text += visit(termCtx)
+            text += str(self.visit(termCtx))
 
             if i < count - 1:
                 addOp = ctx.addOp()[i].getText().lower()
@@ -522,15 +545,14 @@ def typeName(self, pascalType):
 
         return text
 
-
-    def visitTerm(ctx):
+    def visitTerm(self, ctx):
         count = len(ctx.factor())
         text = ""
 
         # Loop over the terms.
         for i in range(count):
             factorCtx = ctx.factor()[i]
-            text += visit(factorCtx)
+            text += str(self.visit(factorCtx))
 
             if i < count - 1:
                 mulOpStr = ctx.mulOp()[i].getText().lower()
@@ -548,36 +570,35 @@ def typeName(self, pascalType):
 
         return text
 
-    def visitVariableFactor(ctx):
-        return visit(ctx.variable())
+    def visitVariableFactor(self, ctx):
+        return self.visit(ctx.variable())
 
-
-    def visitVariable(ctx):
+    def visitVariable(self, ctx):
         idCtx = ctx.variableIdentifier()
         variableId = idCtx.entry
         variableName = variableId.getName()
-        type = ctx.variableIdentifier().type
+        type_ = ctx.variableIdentifier().type_
         variableNameBuilder = [variableName]
 
         if (
-            type != Predefined.booleanType
-            and variableId.getKind() == ENUMERATION_CONSTANT
+                type_ != Predefined.booleanType
+                and variableId.getKind() == Kind.ENUMERATION_CONSTANT
         ):
-            variableNameBuilder.insert(0, type.getIdentifier().getName() + ".")
+            variableNameBuilder.insert(0, type_.getName() + ".")
 
         # Loop over any subscript and field modifiers.
         for modCtx in ctx.modifier():
             # Subscripts.
             if modCtx.indexList() is not None:
                 for indexCtx in modCtx.indexList().index():
-                    indexType = type.getArrayIndexType()
+                    indexType = Predefined.integerType
                     minIndex = 0
 
-                    if indexType.getForm() == SUBRANGE:
+                    if indexType.getForm() == Form.SUBRANGE:
                         minIndex = indexType.getSubrangeMinValue()
 
                     exprCtx = indexCtx.expression()
-                    expr = visit(exprCtx)
+                    expr = self.visit(exprCtx)
                     subscript = (
                         expr
                         if minIndex == 0
@@ -588,105 +609,99 @@ def typeName(self, pascalType):
 
                     variableNameBuilder.append("[" + subscript + "]")
 
-                    type = type.getArrayElementType()
+                    type_ = Predefined.charType #type_.getArrayElementType()
 
             # Record field.
             else:
                 fieldCtx = modCtx.field()
                 fieldName = fieldCtx.entry.getName()
                 variableNameBuilder.append("." + fieldName)
-                type = fieldCtx.type
+                type_ = fieldCtx.type_
 
         return "".join(variableNameBuilder)
 
-    def visitNumberFactor(ctx):
+    def visitNumberFactor(self, ctx):
         return ctx.getText()
 
-
-    def visitCharacterFactor(ctx):
+    def visitCharacterFactor(self, ctx):
         return ctx.getText()
 
+    def visitStringFactor(self, ctx):
+        graspString = ctx.stringConstant().STRING().getText()
+        return '"' + self.convertString(graspString) + '"'
 
-    def visitStringFactor(ctx):
-        pascalString = ctx.stringConstant().STRING().getText()
-        return '"' + convertString(pascalString) + '"'
-
-
-    def convertString(pascalString):
-        unquoted = pascalString[1:-1]
+    def convertString(self, graspString):
+        unquoted = graspString[1:-1]
         return unquoted.replace("''", "'").replace("\"", "\\\"")
 
-    def visitFunctionCallFactor(ctx):
-        callCtx = ctx.functionCall()
+    def visitFunctionCallFactor(self, ctx):
+        callCtx = ctx.functionCallStatement()
         funcNameCtx = callCtx.functionName()
         functionName = funcNameCtx.entry.getName()
 
         text = functionName + "("
 
         if callCtx.argumentList() is not None:
-            text += visit(callCtx.argumentList())
+            text += self.visit(callCtx.argumentList())
 
         text += ")"
         return text
 
+    def visitNotFactor(self, ctx):
+        return "!" + self.visit(ctx.factor())
 
-    def visitNotFactor(ctx):
-        return "!" + visit(ctx.factor())
+    def visitParenthesizedFactor(self, ctx):
+        return "(" + self.visit(ctx.expression()) + ")"
 
+    def visitPrintStatement(self, ctx):
+        self.code.emit("System.out.printf(")
+        self.code.mark()
 
-    def visitParenthesizedFactor(ctx):
-        return "(" + visit(ctx.expression()) + ")"
+        format = self.createWriteFormat(ctx.writeArguments())
+        arguments = self.createWriteArguments(ctx.writeArguments())
 
-    def visitWriteStatement(ctx):
-        code.emit("System.out.printf(")
-        code.mark()
-
-        format = createWriteFormat(ctx.writeArguments())
-        arguments = createWriteArguments(ctx.writeArguments())
-
-        code.emit('"' + format + '"')
+        self.code.emit('"' + format + '"')
 
         if len(arguments) > 0:
-            code.emit(", ")
-            code.split(60)
-            code.emit(arguments)
+            self.code.emit(", ")
+            self.code.split(60)
+            self.code.emit(arguments)
 
-        code.emitEnd(");")
+        self.code.emit_end(");")
         return None
 
-
-    def visitWritelnStatement(ctx):
+    def visitPrintlnStatement(self, ctx):
         if ctx.writeArguments() is not None:
-            code.emit("System.out.printf(")
-            code.mark()
+            self.code.emit("System.out.printf(")
+            self.code.mark()
 
-            format = createWriteFormat(ctx.writeArguments())
-            arguments = createWriteArguments(ctx.writeArguments())
+            format = self.createWriteFormat(ctx.writeArguments())
+            arguments = self.createWriteArguments(ctx.writeArguments())
 
-            code.emit('"' + format + "\\n\"")  # append line feed
+            self.code.emit('"' + format + "\\n\"")  # append line feed
 
             if len(arguments) > 0:
-                code.emit(", ")
-                code.split(60)
-                code.emit(arguments)
+                self.code.emit(", ")
+                self.code.split(60)
+                self.code.emit(arguments)
 
-            code.emitEnd(");")
+            self.code.emit_end(");")
         else:
-            code.emitEnd("System.out.println();")
+            self.code.emit_end("System.out.println();")
 
         return None
 
-    def createWriteFormat(ctx):
+    def createWriteFormat(self, ctx):
         format = ""
 
         # Loop over the "write" arguments.
         for argCtx in ctx.writeArgument():
-            type = argCtx.expression().type
+            type_ = argCtx.expression().type_
             argText = argCtx.getText()
 
             # Append any literal strings.
             if argText[0] == '\'':
-                format += convertString(argText)
+                format += self.convertString(argText)
 
             # For any other expressions, append a field specifier.
             else:
@@ -701,12 +716,12 @@ def typeName(self, pascalType):
                     if dpCtx is not None:
                         format += "." + dpCtx.integerConstant().getText()
 
-                typeFlag = "d" if type == Predefined.integerType else "f" if type == Predefined.realType else "b" if type == Predefined.booleanType else "c" if type == Predefined.charType else "s"
+                typeFlag = "d" if type_ == Predefined.integerType else "f" if type_ == Predefined.realType else "b" if type_ == Predefined.booleanType else "c" if type_ == Predefined.charType else "s"
                 format += typeFlag
 
         return format
 
-    def createWriteArguments(ctx):
+    def createWriteArguments(self, ctx):
         arguments = ""
         separator = ""
 
@@ -716,71 +731,69 @@ def typeName(self, pascalType):
 
             # Not a literal string.
             if argText[0] != '\'':
-                arguments += separator + visit(argCtx.expression())
+                arguments += separator + self.visit(argCtx.expression())
                 separator = ", "
 
         return arguments
 
-
-    def visitReadStatement(ctx):
+    def visitReadStatement(self, ctx):
         if len(ctx.readArguments().variable()) == 1:
-            visit(ctx.readArguments())
+            self.visit(ctx.readArguments())
         else:
-            code.emit("{")
-            code.indent()
-            code.emitStart()
+            self.code.emit("{")
+            self.code.indent()
+            self.code.emit_start()
 
-            visit(ctx.readArguments())
+            self.visit(ctx.readArguments())
 
-            code.dedent()
-            code.emitLine("}")
-
-        return None
-
-    def visitReadlnStatement(ctx):
-        code.emit("{")
-        code.indent()
-        code.emitStart()
-
-        visit(ctx.readArguments())
-        code.emitLine("_sysin.nextLine();")
-
-        code.dedent()
-        code.emitLine("}")
+            self.code.dedent()
+            self.code.emit_line("}")
 
         return None
 
+    def visitReadlnStatement(self, ctx):
+        self.code.emit("{")
+        self.code.indent()
+        self.code.emit_start()
 
-    def visitReadArguments(ctx):
+        self.visit(ctx.readArguments())
+        self.code.emit_line("_sysin.nextLine();")
+
+        self.code.dedent()
+        self.code.emit_line("}")
+
+        return None
+
+    def visitReadArguments(self, ctx):
         size = len(ctx.variable())
 
         # Loop over the read arguments.
         for i in range(size):
             varCtx = ctx.variable()[i]
             varName = varCtx.getText()
-            type = varCtx.type
+            type_ = varCtx.type_
 
             # Read a character.
-            if type == Predefined.charType:
-                code.emit("{")
-                code.indent()
+            if type_ == Predefined.charType:
+                self.code.emit("{")
+                self.code.indent()
 
-                code.emitStart("_sysin.useDelimiter('');")
-                code.emitStart(varName + " = _sysin.next().charAt(0);")
-                code.emitStart("_sysin.reset();")
+                self.code.emit_start("_sysin.useDelimiter(\"\");")
+                self.code.emit_start(varName + " = _sysin.next().charAt(0);")
+                self.code.emit_start("_sysin.reset();")
 
-                code.dedent()
-                code.emitLine("}")
+                self.code.dedent()
+                self.code.emit_line("}")
 
             # Read any other value.
             else:
-                typeName = "Int" if type == Predefined.integerType else \
-                        "Double" if type == Predefined.realType else \
-                        "Boolean" if type == Predefined.booleanType else ""
+                typeName = "Int" if type_ == Predefined.integerType else \
+                    "Double" if type_ == Predefined.realType else \
+                        "Boolean" if type_ == Predefined.booleanType else ""
 
-                code.emit(varName + " = _sysin.next" + typeName + "();")
+                self.code.emit(varName + " = _sysin.next" + typeName + "();")
 
             if i < size - 1:
-                code.emitStart()
+                self.code.emit_start()
 
         return None

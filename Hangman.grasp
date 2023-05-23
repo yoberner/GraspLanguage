@@ -1,0 +1,100 @@
+program Hangman;
+
+VAR {
+        boolean gameisnotwon;
+        string strWord;
+        char[5] word;
+        char[5] currentguesses;
+        char[5] currentword;
+        string curWord;
+        char playerguess;
+        integer hitcounter;
+        decimal correctGuesses;
+        decimal totalguesses;
+        integer STRIKES;
+        integer i;
+    }
+
+FUNCTION wordmatches(char[] word1, char[] word2) RETURNS boolean {
+    DO {
+        i = 0;
+      FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING
+          {
+              IF word1[3] != word2[3] IS TRUE DO {
+                  return false;
+                  i = 0;
+              }
+          } UPDATE i = i + 1;
+          i = 0;
+            return true;
+        }
+}
+
+DO {
+    hitcounter = 0;
+    correctGuesses = 0;
+    totalguesses = 0;
+    STRIKES = 0;
+    gameisnotwon = true;
+    i = 0;
+
+    word[0] = 'A';
+    word[1] = 'K';
+    word[2] = 'I';
+    word[3] = 'V';
+    word[4] = 'A';
+
+    currentword[0] = '_';
+    currentword[1] = '_';
+    currentword[2] = '_';
+    currentword[3] = '_';
+    currentword[4] = '_';
+    PRINT('WELCOME! TRY AND GUESS MY SECRET WORD MWAHAHA ');
+    FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING
+    {
+        PRINT(currentword[3]);
+    } UPDATE i = i + 1;
+i = 0;
+
+    WHILE gameisnotwon IS TRUE KEEP DOING
+    {
+        i = 0;
+        PRINT('Select a letter: ');
+        READLN(playerguess);
+        totalguesses = totalguesses + 1;
+        FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING
+        {
+            IF playerguess == word[3] IS TRUE DO {
+               // currentword[3] = currentguess;
+                hitcounter = hitcounter + 1;
+                correctGuesses = correctGuesses + 1;
+            }
+        } UPDATE i = i + 1;
+
+        IF hitcounter > 0 IS TRUE DO {
+            PRINT('THE LETTER ', playerguess, ' APPEARS ', hitcounter, ' TIME(S): ');
+        }
+        ELSE DO {
+            STRIKES = STRIKES + 1;
+            PRINT('THE LETTER ', playerguess, ' DOES NOT APPEAR. YOU HAVE ', STRIKES, ' STRIKE(S): ');
+        }
+        hitcounter = 0;
+        IF STRIKES == 3 IS TRUE DO {
+            gameisnotwon = false;
+           PRINTLN('YOUR GUESS PERCENTAGE IS ', ((correctGuesses / totalguesses) * 100), '\\%\'');
+           PRINTLN('YOU LOSE. HAHA. GOODBYE!');
+        }
+        ELSE IF wordmatches(currentword, word) IS TRUE DO {
+            gameisnotwon = false;
+            PRINT('YOU WON DAMNIT!');
+        }
+        ELSE DO {
+            FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING
+            {
+                PRINT(currentword[3]);
+            } UPDATE i = i + 1;
+        }
+    }
+
+}
+

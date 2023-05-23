@@ -1,3 +1,5 @@
+from multipledispatch import dispatch
+
 class CodeGenerator:
     
     blanks = ' ' * 80  # 80 blanks
@@ -26,17 +28,20 @@ class CodeGenerator:
         self.length += len(code)
         self.need_lf = True
 
+    @dispatch()
     def emit_start(self):
         self.lf_if_needed()
         self.emit(self.indentation)
         self.position = 0
 
     # ? can you method overload here ?
-    def emit_start_with_code(self, code):
+    @dispatch(str)
+    def emit_start(self, code):
         self.lf_if_needed()
         self.emit(self.indentation + code)
         self.position = 0
 
+    @dispatch()
     def emit_line(self):
         self.lf_if_needed()
         self.object_file.write('\n')
@@ -46,7 +51,8 @@ class CodeGenerator:
         self.need_lf = False
 
     # ? can you method overload here ?
-    def emit_line_with_code(self, code):
+    @dispatch(str)
+    def emit_line(self, code):
         self.lf_if_needed()
         self.object_file.write(self.indentation + code + '\n')
         self.object_file.flush()
@@ -63,7 +69,7 @@ class CodeGenerator:
 
     # ? change to our language?
     def emit_comment_line(self, text):
-        self.emit_line_with_code('// ' + text)
+        self.emit_line('// ' + text)
         self.need_lf = False
 
     def indent(self):
@@ -72,8 +78,8 @@ class CodeGenerator:
     def dedent(self):
         self.indentation = self.indentation[:-4]
 
-    def dedent(self):
-        self.indentation = self.indentation[:-4]
+    def mark(self):
+        self.position = self.length
 
     def split(self, limit):
         if self.length > limit:

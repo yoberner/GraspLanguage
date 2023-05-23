@@ -11,6 +11,7 @@ class SemanticErrorHandler:
         INVALID_SIGN = "Invalid sign"
         INVALID_TYPE = "Invalid type"
         INVALID_VARIABLE = "Invalid variable"
+        INVALID_OPERATOR = "Invalid operator"
         TYPE_MISMATCH = "Mismatched datatype"
         TYPE_MUST_BE_INTEGER = "Datatype must be integer"
         TYPE_MUST_BE_NUMERIC = "Datatype must be integer or real"

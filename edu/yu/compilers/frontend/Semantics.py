@@ -132,7 +132,7 @@ class Semantics(GraspVisitor):
             ctx.type_ = Predefined.stringType
             ctx.value = unquoted.replace("''", "'").replace("\"", "\\\"")
         else:
-            if ctx.unsignedNumber().integerConstant() is not None:
+            if ctx is not None:
                 ctx.type_ = Predefined.integerType
                 ctx.value = int(ctx.getText())
             else:
@@ -161,7 +161,7 @@ class Semantics(GraspVisitor):
 
             typeId = self.symTableStack.enterLocal(typeName, Kind.TYPE)
             typeId.setType(typespecCtx.type_)
-            typespecCtx.type.setIdentifier(typeId.getName(), typeId.getSymTab())  # setIdentifier(typeId)
+            typespecCtx.type_.setIdentifier(typeId.getName(), typeId.getSymTable())  # setIdentifier(typeId)
         # Redeclared identifier.
         else:
             self.error.flag(SemanticErrorHandler.Code.REDECLARED_IDENTIFIER, ctx)
@@ -197,7 +197,7 @@ class Semantics(GraspVisitor):
         recordType.setRecordTypePath(recordTypePath)
 
         # Enter the record fields into the record type's symbol table.
-        recordSymTable = self.createRecordSymTable(recordTypeCtx.recordFields(), recordTypeId)
+        recordSymTable = self.createRecordSymTable(recordTypeCtx.record_fields(), recordTypeId)
         recordType.setRecordSymTable(recordSymTable)
 
         recordTypeCtx.entry = recordTypeId
@@ -238,6 +238,12 @@ class Semantics(GraspVisitor):
         return recordSymTable
 
     def visitSimpleTypespec(self, ctx):
+        self.visit(ctx.simpleType())
+        ctx.type_ = ctx.simpleType().type_
+
+        return None
+
+    def visitArrayElemType(self, ctx:GraspParser.ArrayElemTypeContext):
         self.visit(ctx.simpleType())
         ctx.type_ = ctx.simpleType().type_
 
@@ -345,16 +351,16 @@ class Semantics(GraspVisitor):
         arrayCtx = ctx.arrayType()
         listCtx = arrayCtx.arrayDimensionList()
 
-        ctx.type_ = arrayType
+        ctx.type_ = arrayType # arrayTypespec.type_
 
         # FIXME THIS CODE PORTION IS UNNECCESARY FOR OUR LANGUAGE - NO VARYING INDEX TYPES OR RANGES OF INDEX TYPE.
         # Loop over the array dimensions.
-        count = len(listCtx.expression)  # simpleType().size()
+        count = len(listCtx.expression())  # simpleType().size()
         for i in range(0, count):
-            exprCtx = listCtx.simpleType()[i]
-
+            exprCtx = listCtx.expression()[i]
+            self.visit(exprCtx)
             arrayType.setArrayIndexType(Predefined.integerType)
-            arrayType.setArrayElementCount(self.visit(exprCtx))
+            arrayType.setArrayElementCount(5) # TODO UNNACEPTABLE
 
             if i < count - 1:
                 elementType = Typespec(Form.ARRAY)
@@ -362,8 +368,8 @@ class Semantics(GraspVisitor):
                 arrayType = elementType
         #  ---------------------------------------------------------------------------------
 
-        self.visit(arrayCtx.typeSpecification())
-        elementType = arrayCtx.typeSpecification().type_
+        self.visit(arrayCtx.arrayElemType())
+        elementType = arrayCtx.arrayElemType().type_  # arrayTypeSpec -> arrayType -> arrayElemType.type_
         arrayType.setArrayElementType(elementType)
 
         return None
@@ -467,10 +473,9 @@ class Semantics(GraspVisitor):
             self.visit(typeIdCtx)
             returnType = typeIdCtx.type_
 
-            if returnType.getForm() != Form.SCALAR:
+            if returnType.getForm() != Form.SCALAR: #  TODO VOID?
                 self.error.flag(SemanticErrorHandler.Code.INVALID_RETURN_TYPE, typeIdCtx)
                 returnType = Predefined.integerType
-
             routineId.setType(returnType)
             idCtx.type_ = returnType
         else:
@@ -483,10 +488,13 @@ class Semantics(GraspVisitor):
             assocVarId = self.symTableStack.enterLocal(routineName, Kind.VARIABLE)
             assocVarId.setSlotNumber(symTable.nextSlotNumber())
             assocVarId.setType(returnType)
-
+        for stmt in ctx.block().compoundStatement().statementList().statement():
+            if stmt.returnStatement() is not None:
+                self.visit(stmt.returnStatement().expression())
+                if stmt.returnStatement().expression().type_ != returnType:
+                    self.error.flag(SemanticErrorHandler.Code.INVALID_RETURN_TYPE, funcCtx.typeIdentifier())
         self.visit(ctx.block().compoundStatement())
         routineId.setExecutable(ctx.block().compoundStatement())
-        print('here')
         self.symTableStack._pop()
         return None
 
@@ -670,7 +678,7 @@ class Semantics(GraspVisitor):
 
         if startCtx.type_ != controlType:
             self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, startCtx)
-        if startCtx.type_ != endCtx.type:
+        if startCtx.type_ != endCtx.type_:
             self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, endCtx)
 
         self.visit(ctx.statement())
@@ -815,8 +823,18 @@ class Semantics(GraspVisitor):
             simpleCtx2 = ctx.simpleExpression()[1]
 
             self.visit(simpleCtx2)
-
             simpleType2 = simpleCtx2.type_
+            if relOpCtx.getText() == '+' or relOpCtx.getText == '-' or relOpCtx.getText == '*' or relOpCtx.getText == '/':
+                if not (simpleType1 == Predefined.integerType or simpleType1 == Predefined.realType or simpleType1 == Predefined.charType) :
+                    self.error.flag(SemanticErrorHandler.Code.INVALID_OPERATOR, ctx)
+                if not (simpleType2 == Predefined.integerType or simpleType2 == Predefined.realType or simpleType2 == Predefined.charType) :
+                    self.error.flag(SemanticErrorHandler.Code.INVALID_OPERATOR, ctx)
+            elif relOpCtx.getText() == 'AND'.lower() or relOpCtx.getText == 'OR'.lower():
+                if simpleType1 != Predefined.booleanType:
+                    self.error.flag(SemanticErrorHandler.Code.INVALID_OPERATOR, ctx)
+                if simpleType2 != Predefined.booleanType:
+                    self.error.flag(SemanticErrorHandler.Code.INVALID_OPERATOR, ctx)
+
             if not TypeChecker.areComparisonCompatible(simpleType1, simpleType2):
                 self.error.flag(SemanticErrorHandler.Code.INCOMPATIBLE_COMPARISON, ctx)
 

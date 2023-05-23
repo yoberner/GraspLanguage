@@ -1,22 +1,18 @@
-program Test;
-
-FINAL {
-	integer FOO = 1;
+program Hangman;
+FUNCTION wordMatches(char[] word1, char[] word2) RETURNS boolean {
+    VAR {
+     integer i;
+    }
+    DO {
+      FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING
+          {
+              IF 5 != word1[3] IS TRUE DO {
+                  return false;
+              }
+          } UPDATE i = i + 1;
+            return true;
+        }
 }
 
-var {
-	integer i;
+DO{
 }
-
-FUNCTION cube(integer x) returns integer {
-	integer cube = x * x * x;
-	return cube;
-}
-
-DO {
-
-	//test array
-	println(FOO);
-	println(i);
-
-	}

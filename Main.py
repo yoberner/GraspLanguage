@@ -7,7 +7,7 @@ from gen.GraspParser import GraspParser
 from edu.yu.compilers.frontend.Semantics import Semantics
 from edu.yu.compilers.frontend.SyntaxErrorHandler import SyntaxErrorHandler
 from edu.yu.compilers.intermediate.util.BackendMode import BackendMode
-from edu.yu.compilers.backend.converter import Converter
+from edu.yu.compilers.backend.converter.Converter import Converter
 from antlr4 import CommonTokenStream
 
 
@@ -34,7 +34,7 @@ def main(args):
     mode = BackendMode.CONVERTER
     # Create the input stream.
     # source = open(source_file_name, 'r').read()
-    source = open('SimpleConverterScript.grasp', 'r').read()
+    source = open('Hangman.grasp', 'r').read()
 
     # Create the character stream from the input stream.
     cs = antlr4.InputStream(source)  # FIXME
@@ -67,12 +67,11 @@ def main(args):
     pass2 = Semantics(mode)
     pass2.visit(tree)
 
-    error_count = pass2.getErrorCount()
-    if error_count > 0:
-        print(f"\nThere were {error_count} semantic errors.")
-        print("Object file not created or modified.")
-        return
-
+    # error_count = pass2.getErrorCount()
+    # if error_count > 0:
+    #     print(f"\nThere were {error_count} semantic errors.")
+    #     print("Object file not created or modified.")
+    #     return
 
     if mode == BackendMode.CONVERTER:
         # Pass 3: Convert from Pascal to Java.

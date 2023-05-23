@@ -1,4 +1,5 @@
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
+from edu.yu.compilers.intermediate.type.Form import Form
 
 
 # FIXME This class was converted with ChatGPT so it was not checked so be aware
@@ -86,13 +87,13 @@ class TypeChecker:
         type1 = type1.baseType()
         type2 = type2.baseType()
 
-        if type1.isPascalString() or type2.isPascalString():
-            return False
+        form = type1.getForm()
 
-        if type1.isPascalEnumeration() and type2.isPascalEnumeration():
-            if type1 == type2:
-                return True
+        compatible = False
 
-            return False
+        if (type1 == type2 and form == Form.SCALAR) or form == Form.ENUMERATION:
+            compatible = True
+        elif TypeChecker.isAtLeastOneReal(type1, type2):
+            compatible = True
 
-        form1 = type1.getForm
+        return compatible

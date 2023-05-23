@@ -115,8 +115,28 @@ class GraspVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by GraspParser#enumerationTypespec.
+    def visitEnumerationTypespec(self, ctx:GraspParser.EnumerationTypespecContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GraspParser#enumerationType.
+    def visitEnumerationType(self, ctx:GraspParser.EnumerationTypeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GraspParser#enumerationConstant.
+    def visitEnumerationConstant(self, ctx:GraspParser.EnumerationConstantContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by GraspParser#arrayType.
     def visitArrayType(self, ctx:GraspParser.ArrayTypeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GraspParser#arrayElemType.
+    def visitArrayElemType(self, ctx:GraspParser.ArrayElemTypeContext):
         return self.visitChildren(ctx)
 
 
@@ -192,6 +212,11 @@ class GraspVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by GraspParser#parameterDeclaration.
     def visitParameterDeclaration(self, ctx:GraspParser.ParameterDeclarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by GraspParser#paramTypeMod.
+    def visitParamTypeMod(self, ctx:GraspParser.ParamTypeModContext):
         return self.visitChildren(ctx)
 
 
@@ -467,11 +492,6 @@ class GraspVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by GraspParser#stringConstant.
     def visitStringConstant(self, ctx:GraspParser.StringConstantContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by GraspParser#booleanConstant.
-    def visitBooleanConstant(self, ctx:GraspParser.BooleanConstantContext):
         return self.visitChildren(ctx)
 
 
