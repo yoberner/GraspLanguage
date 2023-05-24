@@ -1,0 +1,9 @@
+program InvalidVariables;
+
+Var{
+integer program;
+}
+
+Do {
+
+}

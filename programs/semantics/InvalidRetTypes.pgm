@@ -1,0 +1,26 @@
+program InvalidRetTypes;
+
+FUNCTION isworking(boolean b) returns boolean {
+DO {
+    return 'string';
+}
+};
+
+FUNCTION retString(string s) returns string {
+DO {
+    return 5;
+}
+};
+
+FUNCTION cube(integer x) returns integer {
+    VAR{
+        char character;
+    }
+    DO {
+        character = 'c';
+        return character;
+	}
+}
+DO {
+
+}

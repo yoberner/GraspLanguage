@@ -1,0 +1,25 @@
+program InvalidFields;
+
+TYPE{
+    Person = blueprint {
+    	integer id;
+    	String name;
+    }
+}
+
+Var{
+    Person p;
+    integer i;
+    string s;
+    boolean bob;
+}
+
+DO {
+
+   i = p.nonexistentField;
+   s = p.definitlyDoesntExistField;
+
+}
+
+
+}

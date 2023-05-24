@@ -1,0 +1,19 @@
+program IncompatibleComparisons;
+
+Var{
+    integer i;
+    decimal d;
+    boolean b;
+    char c;
+    boolean bob;
+    string s;
+
+}
+
+DO {
+      IF (c < i) IS TRUE DO {
+
+      } ELSE IF (bob != d) IS TRUE DO {
+      }
+
+}

@@ -1,0 +1,22 @@
+program MustBeAProcedure;
+FINAL{
+integer c = 10;
+}
+Type{
+    char[] = char[5];
+}
+var{
+ integer i;
+ boolean b;
+ decimal d;
+}
+
+DO{
+ i = i(5);
+ i = d(i) + char[](4);
+
+
+
+
+
+}

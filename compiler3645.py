@@ -12,29 +12,16 @@ from antlr4 import CommonTokenStream
 
 
 def main(args):
-    # if len(args) != 3:
-    #     print(args)
-    #     print("USAGE: pascalCC {-execute|-convert|-compile} sourceFileName")
-    #     return
-    #
-    # option = args[1]
-    # source_file_name = args[2]
-    #
-    # mode = BackendMode.EXECUTOR  # FIXME
-    #
-    # if option.lower() == "-convert":
-    #     mode = BackendMode.CONVERTER
-    # elif option.lower() == "-execute":
-    #     mode = BackendMode.EXECUTOR
-    # elif option.lower() == "-compile":
-    #     mode = BackendMode.COMPILER
-    # else:
-    #     print("ERROR: Invalid option.")
-    #     print("   Valid options: -execute, -convert, or -compile")
+    if len(args) != 2:
+        print(args)
+        print("python3 compiler3645.py <sourceFileName>")
+        return
+
+    source_file_name = args[1]
+
     mode = BackendMode.CONVERTER
     # Create the input stream.
-    # source = open(source_file_name, 'r').read()
-    source = open('Hangman.grasp', 'r').read()
+    source = open(source_file_name, 'r').read()
 
     # Create the character stream from the input stream.
     cs = antlr4.InputStream(source)  # FIXME
@@ -56,7 +43,7 @@ def main(args):
     parser.removeErrorListeners()
     parser.addErrorListener(syntax_error_handler)
     tree = parser.program()
-
+    #
     # error_count = syntax_error_handler.get_count()
     # if error_count > 0:
     #     print(f"\nThere were {error_count} syntax errors.")
@@ -67,17 +54,21 @@ def main(args):
     pass2 = Semantics(mode)
     pass2.visit(tree)
 
-    # error_count = pass2.getErrorCount()
-    # if error_count > 0:
-    #     print(f"\nThere were {error_count} semantic errors.")
-    #     print("Object file not created or modified.")
-    #     return
+    error_count = pass2.getErrorCount()
+    if error_count > 0:
+        print(f"\nThere were {error_count} semantic errors.")
+        print("Object file not created or modified.")
+        return
 
     if mode == BackendMode.CONVERTER:
-        # Pass 3: Convert from Pascal to Java.
+        # Pass 3: Convert from Grasp to Java.
         pass3 = Converter()
         objectCode = str(pass3.visit(tree))
-        print(objectCode)
+        # print(objectCode)
+        open("Hangman.java", "x")
+        javaFile = open("Hangman.java", "a")
+        javaFile.write(objectCode)
+        javaFile.close()
 
 
 if __name__ == "__main__":

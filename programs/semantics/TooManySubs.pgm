@@ -1,0 +1,15 @@
+program TooManySubs;
+
+Var{
+
+char[5] charArr;
+char c;
+integer i;
+
+}
+
+DO {
+    charArr[0][1] = c;
+    i = i[0];
+
+}

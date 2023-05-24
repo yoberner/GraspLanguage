@@ -1,0 +1,44 @@
+program MustBeX;
+
+Var{
+
+integer i;
+decimal d;
+boolean truth;
+string s;
+}
+FUNCTION isworking(boolean b) returns boolean {
+DO {
+    return b;
+}
+};
+
+FUNCTION retString(string s) returns string {
+DO {
+    return s;
+}
+};
+FUNCTION cube(integer x) returns integer {
+    DO {
+	integer cube = x * x * x;
+	return cube;
+	}
+};
+
+FUNCTION add(decimal y) returns decimal {
+    VAR{
+           decimal result;
+    }
+    DO {
+	result = y + 5;
+	return result;
+	}
+}
+DO {
+
+    i = cube('string');
+    d = add(true);
+    truth = isworking(5);
+    s = retString(10.0);
+
+}

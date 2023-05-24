@@ -1,0 +1,33 @@
+program ArgCountMismatches;
+
+Var{
+
+integer i;
+decimal d;
+boolean truth;
+string s;
+}
+FUNCTION isworking(boolean b) returns boolean {
+DO {
+    return b;
+}
+};
+
+FUNCTION retString(string s, string t) returns string {
+DO {
+    return s;
+}
+};
+FUNCTION cube(integer x) returns integer {
+    DO {
+	integer cube = x * x * x;
+	return cube;
+	}
+}
+DO {
+
+    i = cube(5, 6, 7);
+    truth = isworking(true, false);
+    s = retString('oneArg');
+
+}

@@ -1,6 +1,6 @@
 program Hangman;
 type{
-char[] = char[5];
+char[] = char[5]
 }
 VAR {
         boolean gameisnotwon;
@@ -65,6 +65,7 @@ i = 0;
     WHILE gameisnotwon IS TRUE KEEP DOING
     {
         i = 0;
+        PRINTLN('');
         PRINT('Select a letter: ');
         READLN(playerguess);
         totalguesses = totalguesses + 1;
@@ -92,7 +93,7 @@ i = 0;
         }
         ELSE IF wordmatches(currentword, word) IS TRUE DO {
             gameisnotwon = false;
-            PRINT('YOU WON DAMNIT!');
+            PRINT('YOU WON OH SHOOT NOW YOU GET TO GRADUATE!');
         }
         ELSE DO {
             FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING

@@ -1,0 +1,9 @@
+program UndeclaredIdentifiers;
+
+DO {
+
+    undeclaredVariable = undeclaredFunction(5);
+
+
+
+}

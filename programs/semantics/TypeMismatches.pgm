@@ -1,0 +1,21 @@
+program TypeMismatches;
+
+Var{
+integer i;
+decimal d;
+boolean b;
+char c;
+string s;
+
+}
+
+Do{
+    i = i + b;
+    d = b + c;
+    IF (true + 'c') IS TRUE DO {
+    }
+
+
+
+
+}

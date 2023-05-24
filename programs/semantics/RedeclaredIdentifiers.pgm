@@ -1,0 +1,28 @@
+program RedeclaredIdentifiers;
+
+FINAL {
+ //These lines should throw re-declared id errors for constants, types, routines, etc
+ integer redeclaredConstantX = 5;
+ integer redeclaredConstantX = 6;
+ }
+Var{
+    boolean redeclaredVariableX;
+    boolean redeclaredVariableX;
+}
+
+
+FUNCTION redeclaredFunction(integer x) returns integer {
+	DO{
+	    return 2;
+	}
+};
+
+FUNCTION redeclaredFunction(integer x) returns integer {
+	DO{
+        return 1;
+    }
+}
+
+DO {
+
+}

@@ -1,7 +1,7 @@
 # Convert Pascal programs to Java.
 import io
 
-from GraspParser import GraspParser
+from gen.GraspParser import GraspParser
 from edu.yu.compilers.backend.converter.CodeGenerator import CodeGenerator
 from edu.yu.compilers.intermediate.symtable.Kind import Kind
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined

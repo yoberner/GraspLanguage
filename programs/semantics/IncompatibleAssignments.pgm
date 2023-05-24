@@ -1,0 +1,17 @@
+program IncompatibleAssignments;
+
+Var{
+    integer i;
+    decimal d;
+    boolean b;
+    boolean bob;
+    string s;
+
+}
+
+DO {
+    i = true;
+    d = 'c';
+    b = 5;
+    bob = 6.0;
+}

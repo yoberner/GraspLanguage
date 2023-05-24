@@ -197,7 +197,7 @@ class Semantics(GraspVisitor):
         recordType.setRecordTypePath(recordTypePath)
 
         # Enter the record fields into the record type's symbol table.
-        recordSymTable = self.createRecordSymTable(recordTypeCtx.record_fields(), recordTypeId)
+        recordSymTable = self.createRecordSymTable(recordTypeCtx.recordFields(), recordTypeId)
         recordType.setRecordSymTable(recordSymTable)
 
         recordTypeCtx.entry = recordTypeId
@@ -268,7 +268,7 @@ class Semantics(GraspVisitor):
 
             typeId.appendLineNumber(ctx.start.line)
         else:
-            self.error.flag(SemanticErrorHandler.Code.UNDECLARED_IDENTIFIER, ctx)
+            self.error.flag(SemanticErrorHandler.Code.INVALID_TYPE, ctx)
             ctx.type_ = Predefined.integerType
 
         ctx.entry = typeId
@@ -473,7 +473,7 @@ class Semantics(GraspVisitor):
             self.visit(typeIdCtx)
             returnType = typeIdCtx.type_
 
-            if returnType.getForm() != Form.SCALAR: #  TODO VOID?
+            if returnType.getForm() != Form.SCALAR and returnType.getForm() != Form.ENUMERATION: #  TODO VOID?
                 self.error.flag(SemanticErrorHandler.Code.INVALID_RETURN_TYPE, typeIdCtx)
                 returnType = Predefined.integerType
             routineId.setType(returnType)
@@ -679,7 +679,8 @@ class Semantics(GraspVisitor):
         if startCtx.type_ != controlType:
             self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, startCtx)
         if startCtx.type_ != endCtx.type_:
-            self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, endCtx)
+            pass
+            # self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, endCtx)
 
         self.visit(ctx.statement())
         return None
@@ -719,7 +720,6 @@ class Semantics(GraspVisitor):
         listCtx = callCtx.argumentList()
         name = callCtx.functionName().getText().lower()
         functionId = self.symTableStack.lookup(name)
-        identifierType = functionId.getKind()
         badName = False
         ctx.type_ = Predefined.integerType
         if functionId is None:
@@ -790,7 +790,8 @@ class Semantics(GraspVisitor):
                 elif paramType == Predefined.stringType:
                     self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_STRING, exprCtx)
                 else:
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, exprCtx)
+                    pass
+                    # self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, exprCtx)
 
     def expression_is_variable(self, expr_ctx):
         # Only a single simple expression?
@@ -824,6 +825,16 @@ class Semantics(GraspVisitor):
 
             self.visit(simpleCtx2)
             simpleType2 = simpleCtx2.type_
+            # # char int and dec operations are all possible
+            # if simpleType1 == Predefined.booleanType and simpleType2 != Predefined.booleanType:
+            #     self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH)
+            # if simpleType2 == Predefined.booleanType and simpleType1 != Predefined.booleanType:
+            #     self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH)
+            # if simpleType1 == Predefined.stringType and simpleType2 != Predefined.stringType:
+            #     self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH)
+            # if simpleType2 == Predefined.stringType and simpleType1 != Predefined.stringType:
+            #     self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH)
+
             if relOpCtx.getText() == '+' or relOpCtx.getText == '-' or relOpCtx.getText == '*' or relOpCtx.getText == '/':
                 if not (simpleType1 == Predefined.integerType or simpleType1 == Predefined.realType or simpleType1 == Predefined.charType) :
                     self.error.flag(SemanticErrorHandler.Code.INVALID_OPERATOR, ctx)
@@ -867,10 +878,10 @@ class Semantics(GraspVisitor):
             # Both operands boolean ==> boolean result. Else type mismatch.
             if op == "or":
                 if not TypeChecker.isBoolean(termType1):
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, termCtx1)
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, termCtx1)
 
                 if not TypeChecker.isBoolean(termType2):
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, termCtx2)
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, termCtx2)
 
                 if hasSign:
                     self.error.flag(SemanticErrorHandler.Code.INVALID_SIGN, signCtx)
@@ -898,11 +909,11 @@ class Semantics(GraspVisitor):
                 # Type mismatch.
                 else:
                     if not TypeChecker.isIntegerOrReal(termType1):
-                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx1)
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, termCtx1)
                         termType2 = Predefined.integerType
 
                     if not TypeChecker.isIntegerOrReal(termType2):
-                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, termCtx2)
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, termCtx2)
                         termType2 = Predefined.integerType
 
             else:
@@ -952,11 +963,11 @@ class Semantics(GraspVisitor):
                     # Type mismatch.
                 else:
                     if not TypeChecker.isIntegerOrReal(factorType1):
-                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx1)
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx1)
                         factorType2 = Predefined.integerType
 
                     if not TypeChecker.isIntegerOrReal(factorType2):
-                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx2)
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx2)
                         factorType2 = Predefined.integerType
             elif op == "/":
                 # All integer and real operand combinations ==> real result
@@ -966,29 +977,29 @@ class Semantics(GraspVisitor):
                     # Type mismatch.
                 else:
                     if not TypeChecker.isIntegerOrReal(factorType1):
-                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx1)
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx1)
                         factorType2 = Predefined.integerType
 
                     if not TypeChecker.isIntegerOrReal(factorType2):
-                        self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_NUMERIC, factorCtx2)
+                        self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx2)
                         factorType2 = Predefined.integerType
             elif op == "div" or op == "mod":
                 # Both operands integer ==> integer result. Else type mismatch.
                 if not TypeChecker.isInteger(factorType1):
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, factorCtx1)
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx1)
                     factorType2 = Predefined.integerType
 
                 if not TypeChecker.isInteger(factorType2):
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_INTEGER, factorCtx2)
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx2)
                     factorType2 = Predefined.integerType
             elif op == "and":
                 # Both operands boolean ==> boolean result. Else type mismatch.
                 if not TypeChecker.isBoolean(factorType1):
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx1)
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx1)
                     factorType2 = Predefined.booleanType
 
                 if not TypeChecker.isBoolean(factorType2):
-                    self.error.flag(SemanticErrorHandler.Code.TYPE_MUST_BE_BOOLEAN, factorCtx2)
+                    self.error.flag(SemanticErrorHandler.Code.TYPE_MISMATCH, factorCtx2)
                     factorType2 = Predefined.booleanType
 
             factorType1 = factorType2

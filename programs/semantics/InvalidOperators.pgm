@@ -1,0 +1,14 @@
+program InvalidOperators;
+
+Var{
+    integer i;
+    decimal d;
+    boolean b;
+    boolean bob;
+    string s;
+
+}
+
+Do{
+    b =;
+}

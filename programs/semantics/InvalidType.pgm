@@ -1,0 +1,15 @@
+program InvalidType;
+
+Var{
+notAtype i;
+}
+
+Function action(integer x) returns notAtypeEither {
+    DO{
+        return x;
+    }
+}
+
+DO {
+
+}
