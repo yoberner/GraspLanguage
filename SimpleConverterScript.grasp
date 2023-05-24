@@ -1,18 +1,20 @@
 program Hangman;
-FUNCTION wordMatches(char[] word1, char[] word2) RETURNS boolean {
-    VAR {
-     integer i;
-    }
-    DO {
-      FOR INDEX i START AT 0 AND WHILE i < 5 KEEP DOING
-          {
-              IF 5 != word1[3] IS TRUE DO {
-                  return false;
-              }
-          } UPDATE i = i + 1;
-            return true;
-        }
+type{
+char[] = char[5];
+}
+var {
+integer i;
 }
 
+FUNCTION action(char[] word) returns integer{
+VAR{
+integer j;
+}
+Do{
+    j = 5;
+    return j;
+}
+}
 DO{
+
 }

@@ -274,7 +274,7 @@ BLUEPRINT : B L U E P R I N T ;
 RETURNS    : R E T U R N S ;
 RETURN    : R E T U R N ;
 
-IDENTIFIER : [a-zA-Z][a-zA-Z0-9]*;
+IDENTIFIER : [a-zA-Z][a-zA-Z0-9]*('['']')*;
 INTEGER    : [0-9]+ ;
 
 DECIMAL    : INTEGER '.' INTEGER

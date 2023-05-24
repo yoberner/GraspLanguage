@@ -511,7 +511,7 @@ class Semantics(GraspVisitor):
         return parameterList
 
     def visitParameterDeclaration(self, ctx):
-        kind = Kind.REFERENCE_PARAMETER if (ctx.VAR() is not None) else Kind.VALUE_PARAMETER  # kind
+        kind = Kind.REFERENCE_PARAMETER if (ctx.VAR() is not None) else Kind.VALUE_PARAMETER  # kind #already see a prob here
         typeCtx = ctx.typeIdentifier()
 
         self.visit(typeCtx)

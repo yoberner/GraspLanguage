@@ -1,6 +1,7 @@
 # Convert Pascal programs to Java.
 import io
 
+from GraspParser import GraspParser
 from edu.yu.compilers.backend.converter.CodeGenerator import CodeGenerator
 from edu.yu.compilers.intermediate.symtable.Kind import Kind
 from edu.yu.compilers.intermediate.symtable.Predefined import Predefined
@@ -29,8 +30,22 @@ class Converter(GraspVisitor):
     def get_program_name(self):
         return self.program_name
 
-    # def visitRoutineDefinition(self, ctx):
-    #     return None
+    def visitRoutineDefinition(self, ctx):
+        self.visit(ctx.functionHead())
+        varDecs = ctx.block().declarations().variablesPart()
+        if varDecs is not None:
+            for varDec in varDecs.variableDeclarationsList().variableDeclarations() :
+                for id_ in varDec.variableIdentifierList().variableIdentifier() :
+                    self.code.emit_start()
+                    self.visit(varDec.typeSpecification())
+                    self.code.emit(" " + id_.getText() + ";")
+        self.code.emit_start()
+        stmts = ctx.block().compoundStatement().statementList().statement()
+        for i in range(len(stmts)) :
+            self.visit(stmts[i])
+
+        self.code.emit("}")
+        return None
 
     def visitProgram(self, ctx):
         sw = io.StringIO()
@@ -487,6 +502,10 @@ class Converter(GraspVisitor):
 
         return None
 
+    def visitReturnStatement(self, ctx: GraspParser.ReturnStatementContext):
+        self.code.emit_line(f"return {ctx.expression().getText()};")
+
+
     def visitArgumentList(self, ctx):
         text = ""
         separator = ""
@@ -497,7 +516,6 @@ class Converter(GraspVisitor):
             separator = ", "
 
         return text
-
     def visitExpression(self, ctx):
         simpleCtx1 = ctx.simpleExpression()[0]
         relOpCtx = ctx.relOp()
