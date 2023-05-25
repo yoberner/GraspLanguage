@@ -358,7 +358,7 @@ class Converter(GraspVisitor):
         # Don't include the program name in the record type path.
         # Replace each $ with a period.
         typePath = typePath[index + 1:].replace('$', '.')
-        self.code.emit("new " + typePath + "()")
+        self.code.emit("new " + typePath + "();")
 
         self.emitNewRecordFields(lhsPrefix + variableName + ".", recordType)
 
@@ -652,10 +652,29 @@ class Converter(GraspVisitor):
         unquoted = graspString[1:-1]
         return unquoted.replace("''", "'").replace("\"", "\\\"")
 
+    def visitFunctionCallStatement(self, ctx:GraspParser.FunctionCallStatementContext):
+        funcNameCtx = ctx.functionName()
+        funcSTE = funcNameCtx.entry
+        functionName = funcSTE.getName()
+
+        if funcSTE.isInline():
+            self.visit(funcSTE.getExecutable())
+        else:
+            text = functionName + "("
+
+            if ctx.argumentList() is not None:
+                text += self.visit(ctx.argumentList())
+
+            text += ");"
+            self.code.emit(text)
+
+
+
     def visitFunctionCallFactor(self, ctx):
         callCtx = ctx.functionCallStatement()
         funcNameCtx = callCtx.functionName()
-        functionName = funcNameCtx.entry.getName()
+        funcSTE = funcNameCtx.entry
+        functionName = funcSTE.getName()
 
         text = functionName + "("
 

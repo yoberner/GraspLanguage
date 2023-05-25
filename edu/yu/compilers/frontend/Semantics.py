@@ -488,7 +488,11 @@ class Semantics(GraspVisitor):
             assocVarId = self.symTableStack.enterLocal(routineName, Kind.VARIABLE)
             assocVarId.setSlotNumber(symTable.nextSlotNumber())
             assocVarId.setType(returnType)
-        for stmt in ctx.block().compoundStatement().statementList().statement():
+        functionStatements = ctx.block().compoundStatement().statementList().statement()
+        if len(functionStatements) < 3:
+            routineId.setInline(True)
+
+        for stmt in functionStatements:
             if stmt.returnStatement() is not None:
                 self.visit(stmt.returnStatement().expression())
                 if stmt.returnStatement().expression().type_ != returnType:
@@ -1081,7 +1085,7 @@ class Semantics(GraspVisitor):
                         dataType = fieldId.getType()
                         fieldCtx.entry = fieldId
                         fieldCtx.type_ = dataType
-                        fieldId.appendLineNumber(modCtx.getStart().getLine())
+                        fieldId.appendLineNumber(modCtx.start.line)
                     else:
                         self.error.flag(SemanticErrorHandler.Code.INVALID_FIELD, modCtx)
 

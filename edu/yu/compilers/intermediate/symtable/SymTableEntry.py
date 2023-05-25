@@ -23,6 +23,7 @@ class SymTableEntry:
         parameters = None  # routine's formal parameters
         subroutines = None  # symTable entries of subroutines
         executable = None  # routine's executable code
+        inline = False
 
     # Constructor.
       #
@@ -43,6 +44,7 @@ class SymTableEntry:
             self.info = self.ValueInfo()
         elif self.kind == Kind.PROGRAM or self.kind == Kind.PROCEDURE or self.kind == Kind.FUNCTION:
             self.info = self.RoutineInfo()
+            self.info.inline = False
             self.info.parameters = []
             self.info.subroutines = []
 
@@ -209,4 +211,10 @@ class SymTableEntry:
     # @param executable the executable code to set.
     def setExecutable(self, executable) :
         self.info.executable = executable
+
+    def isInline(self):
+        return self.info.inline;
+
+    def setInline(self, inline):
+        self.info.inline = inline
 

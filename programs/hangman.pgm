@@ -1,20 +1,23 @@
 program Hangman;
 type{
 char[] = char[5]
+Person = blueprint {
+    	integer id;
+    	String name;
+    }
 }
 VAR {
         boolean gameisnotwon;
-        string strWord;
         char[5] word;
         char[5] currentguesses;
         char[5] currentword;
-        string curWord;
         char playerguess;
         integer hitcounter;
         decimal correctguesses;
         decimal totalguesses;
         integer STRIKES;
         integer i;
+        Person p;
     }
 
 FUNCTION wordmatches(char[] word1, char[] word2) RETURNS boolean {
@@ -37,6 +40,17 @@ integer i;
 }
 
 DO {
+
+    println('Before we get this game started I need to show you that our custom record types work!');
+    println('We defined a Variable p of type Person which we defined to contain an id integer field and a string name field');
+    println('We will now assign values to the record objects fields:');
+    p.id = 7532;
+    p.name = 'Michael';
+    Println('we will now print those fields:');
+    Println(p.id);
+    println(p.name);
+    println('See it works! - now onto the game');
+
     hitcounter = 0;
     correctguesses = 0;
     totalguesses = 0;
