@@ -426,7 +426,7 @@ class Converter(GraspVisitor):
                 paramDec = parameterDeclarations[i]
                 parameterIdentifier = paramDec.parameterIdentifier()
                 self.visit(paramDec.typeIdentifier())  # type
-                if paramDec.paramTypeMod() is not None:
+                if paramDec.typeIdentifier().type_.form == Form.ARRAY:
                     self.code.emit('[]')
                 self.code.emit(" " + str(parameterIdentifier.IDENTIFIER()))
                 if i < len(parameterDeclarations) - 1:
@@ -652,21 +652,21 @@ class Converter(GraspVisitor):
         unquoted = graspString[1:-1]
         return unquoted.replace("''", "'").replace("\"", "\\\"")
 
-    def visitFunctionCallStatement(self, ctx:GraspParser.FunctionCallStatementContext):
-        funcNameCtx = ctx.functionName()
-        funcSTE = funcNameCtx.entry
-        functionName = funcSTE.getName()
-
-        if funcSTE.isInline():
-            self.visit(funcSTE.getExecutable())
-        else:
-            text = functionName + "("
-
-            if ctx.argumentList() is not None:
-                text += self.visit(ctx.argumentList())
-
-            text += ");"
-            self.code.emit(text)
+    # def visitFunctionCallStatement(self, ctx:GraspParser.FunctionCallStatementContext):
+    #     funcNameCtx = ctx.functionName()
+    #     funcSTE = funcNameCtx.entry # need to visit functioncall stmt in semantics
+    #     functionName = funcSTE.getName()
+    #
+    #     if funcSTE.isInline():
+    #         self.visit(funcSTE.getExecutable())
+    #     else:
+    #         text = functionName + "("
+    #
+    #         if ctx.argumentList() is not None:
+    #             text += self.visit(ctx.argumentList())
+    #
+    #         text += ");
+    #         self.code.emit(text)
 
 
 

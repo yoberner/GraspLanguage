@@ -76,7 +76,7 @@ variableIdentifier  locals [ Typespec type = None, SymTableEntry entry = None ]
 
 routinesPart      : routineDefinition ( ';' routineDefinition)* ;
 routineDefinition : ( functionHead ) '{' block '}';
-functionHead      : FUNCTION  routineIdentifier parameters? RETURNS typeIdentifier ;
+functionHead      : FUNCTION FINAL? routineIdentifier parameters? RETURNS typeIdentifier ;
 
 routineIdentifier   locals [ Typespec type = None, SymTableEntry entry = None ]
     : IDENTIFIER ;

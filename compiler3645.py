@@ -1,3 +1,4 @@
+import os
 import sys
 
 import antlr4
@@ -64,9 +65,10 @@ def main(args):
         # Pass 3: Convert from Grasp to Java.
         pass3 = Converter()
         objectCode = str(pass3.visit(tree))
-        # print(objectCode)
-        open("Hangman.java", "x")
-        javaFile = open("Hangman.java", "a")
+        print(objectCode)
+        java_file_name = (source_file_name[source_file_name.rfind(os.sep) + 1:source_file_name.index('.')] + '.java').capitalize()
+        open(java_file_name, "x")
+        javaFile = open(java_file_name, "a")
         javaFile.write(objectCode)
         javaFile.close()
 

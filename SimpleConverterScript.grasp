@@ -1,20 +1,27 @@
 program Hangman;
-type{
-char[] = char[5];
+Type{
+arr = char[5]
+
+Person = blueprint{
+integer id;
+string name;
 }
-var {
+}
+var{
+arr c;
 integer i;
 }
 
-FUNCTION action(char[] word) returns integer{
+FUNCTION FINAL action(arr p) returns integer{
 VAR{
 integer j;
 }
 Do{
-    j = 5;
+    j = 8;
     return j;
 }
 }
 DO{
-
+    i = 5;
+    i = action(6);
 }

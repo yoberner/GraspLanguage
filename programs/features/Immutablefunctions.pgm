@@ -1,0 +1,59 @@
+program Immutablefunctions;
+type{
+    char[] = char[5]
+}
+Var{
+    integer globalvar;
+}
+
+Function regularfunctionthatuseslocalvariables(integer input) returns integer{
+    var{
+        integer local;
+
+    }
+    Do {
+        local = input + 5;
+        return local;
+    }
+};
+
+Function regularfunctionthatuseslocalvariablesDud(integer input, char[] example) returns integer{
+    var{
+        integer local;
+
+    }
+    Do {
+        local = input + 5;
+        return local;
+    }
+};
+
+Function regularfunctionthatusesglobalvariables(integer input) returns integer{
+    Do {
+        globalvar = input + 10;
+        return globalvar;
+    }
+};
+
+Function FINAL immutablefunctionthatuseslocalvariables(integer input) returns integer{
+    var{
+        integer local;
+    }
+    Do {
+        local = input + 15;
+        return local;
+    }
+}
+
+DO{
+println('This is a REGULAR function that uses LOCAL variable and should return its computation with no errors (input + 5)');
+println(regularfunctionthatuseslocalvariables(5));
+println('This is a REGULAR function that uses GLOBAL variable and should return its computation with no errors (input + 10)');
+println(regularfunctionthatusesglobalvariables(5));
+PRINTLN('This is an IMMUTABLE function that uses LOCAL variable and should return its computation with no errors (input + 15)'));
+println(immutablefunctionthatuseslocalvariables(5));
+Println('great! everything worked - now try to run the ImmutableFunctionOverwritesGlobals.pgm - it should throw a Semantic error!');
+
+
+}
+

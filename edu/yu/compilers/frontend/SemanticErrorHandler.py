@@ -7,6 +7,7 @@ class SemanticErrorHandler:
     class Code(Enum):
         UNDECLARED_IDENTIFIER = "Undeclared identifier"
         REDECLARED_IDENTIFIER = "Redeclared identifier"
+        IMMUTABLE_FUNCTION = "Function is Immutable - can not write to global variable"
         INVALID_CONSTANT = "Invalid constant"
         INVALID_SIGN = "Invalid sign"
         INVALID_TYPE = "Invalid type"

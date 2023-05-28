@@ -1,0 +1,17 @@
+program ImmutableFunctionOverwritesGlobal;
+
+VAR{
+    string globalvar;
+}
+Function FINAL immutablefunctionthatuseslocalvariables(string input) returns string{
+    Do {
+        globalvar = input;
+        return globalvar;
+    }
+}
+
+DO{
+
+// We should never get here
+
+}

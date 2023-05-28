@@ -449,6 +449,8 @@ class Semantics(GraspVisitor):
         # this is an in line conditional in python - cool
         routineId = self.symTableStack.enterLocal(routineName, Kind.FUNCTION if functionDefinition else Kind.PROCEDURE)
         routineId.setRoutineCode(Routine.DECLARED)
+        if funcCtx.FINAL() is not None:
+            routineId.setImmutable(True)
         idCtx.entry = routineId
 
         # Append to the parent routine's list of subroutines.
@@ -563,7 +565,13 @@ class Semantics(GraspVisitor):
 
     # ? assuming visit defined
     def visitLhs(self, ctx):
+
+        # if symTable.getNestingLevel() > 1:
         varCtx = ctx.variable()
+        varST = self.symTableStack.lookup(varCtx.variableIdentifier().IDENTIFIER().getText().lower()).getSymTable()
+        currentScope = self.symTableStack.getLocalSymTable().getOwner()
+        if varST.getNestingLevel() <= 1 and currentScope.getKind() == Kind.FUNCTION and currentScope.isImmutable():
+            self.error.flag(SemanticErrorHandler.Code.IMMUTABLE_FUNCTION, ctx)
         self.visit(varCtx)
         ctx.type_ = varCtx.type_
 
