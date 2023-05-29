@@ -32,16 +32,31 @@ class Converter(GraspVisitor):
 
     def visitRoutineDefinition(self, ctx):
         self.visit(ctx.functionHead())
+        self.visitFunctionBlock(ctx)
+
+
+    def visitFunctionBlock(self, ctx):
         varDecs = ctx.block().declarations().variablesPart()
         if varDecs is not None:
-            for varDec in varDecs.variableDeclarationsList().variableDeclarations() :
-                for id_ in varDec.variableIdentifierList().variableIdentifier() :
+            for varDec in varDecs.variableDeclarationsList().variableDeclarations():
+                for id_ in varDec.variableIdentifierList().variableIdentifier():
                     self.code.emit_start()
                     self.visit(varDec.typeSpecification())
                     self.code.emit(" " + id_.getText() + ";")
+        routineDefs = ctx.block().declarations().routinesPart()
+        if routineDefs is not None:
+            self.code.emit_start()
+            self.code.emit('class Local{')
+            for definition in routineDefs.routineDefinition():
+                self.code.emit_start()
+                #  visit funcHead
+                self.visitSubFunctionHead(definition.functionHead())
+                # everything else is the same
+                self.visitFunctionBlock(definition)  # visits the routien definitions like any other
+            self.code.emit("\n}")
         self.code.emit_start()
         stmts = ctx.block().compoundStatement().statementList().statement()
-        for i in range(len(stmts)) :
+        for i in range(len(stmts)):
             self.visit(stmts[i])
 
         self.code.emit("}")
@@ -436,6 +451,30 @@ class Converter(GraspVisitor):
         self.code.emit("){")
         return None
 
+    def visitSubFunctionHead(self, ctx):
+        funcName = str(ctx.routineIdentifier().IDENTIFIER())
+        self.code.emit("static ")
+        self.visit(ctx.typeIdentifier())
+        self.code.emit(" " + funcName + "(")
+
+        if ctx.parameters() is not None:
+            #
+            parameterDeclarations = ctx.parameters().parameterDeclarationsList().parameterDeclaration()  # TODO YOULL NEED TO CHANGE THIS
+            i = 0
+            while i < len(parameterDeclarations):  # TODO CHANGED TO REG WHILE MIGHT NEED TO FIX
+                paramDec = parameterDeclarations[i]
+                parameterIdentifier = paramDec.parameterIdentifier()
+                self.visit(paramDec.typeIdentifier())  # type
+                if paramDec.typeIdentifier().type_.form == Form.ARRAY:
+                    self.code.emit('[]')
+                self.code.emit(" " + str(parameterIdentifier.IDENTIFIER()))
+                if i < len(parameterDeclarations) - 1:
+                    self.code.emit(", ")
+                i += 1
+
+        self.code.emit("){")
+        return None
+
     # def visitProcedureCallStatement(self, ctx):
     #     procNameCtx = ctx.procedureName()
     #     procedureName = procNameCtx.entry.getName()
@@ -453,7 +492,7 @@ class Converter(GraspVisitor):
         needBraces = ctx.statement().compoundStatement() is not None
         initialStmt = self.visit(ctx.variable()) + " = " + self.visit(ctx.expression(0))
         limit = self.visit(ctx.expression(1))
-        updateString = self.visit(ctx.variable()) + "++" #  TODO NEED TO FIX
+        updateString = self.visit(ctx.variable()) + "++"  # TODO NEED TO FIX
         self.code.emit("for ( " + initialStmt + "; " + limit + "; " + updateString + ")")
         if not needBraces:
             self.code.indent()
@@ -505,7 +544,6 @@ class Converter(GraspVisitor):
     def visitReturnStatement(self, ctx: GraspParser.ReturnStatementContext):
         self.code.emit_line(f"return {ctx.expression().getText()};")
 
-
     def visitArgumentList(self, ctx):
         text = ""
         separator = ""
@@ -516,6 +554,7 @@ class Converter(GraspVisitor):
             separator = ", "
 
         return text
+
     def visitExpression(self, ctx):
         simpleCtx1 = ctx.simpleExpression()[0]
         relOpCtx = ctx.relOp()
@@ -627,7 +666,7 @@ class Converter(GraspVisitor):
 
                     variableNameBuilder.append("[" + subscript + "]")
 
-                    type_ = Predefined.charType #type_.getArrayElementType()
+                    type_ = Predefined.charType  # type_.getArrayElementType()
 
             # Record field.
             else:
@@ -668,15 +707,17 @@ class Converter(GraspVisitor):
     #         text += ");
     #         self.code.emit(text)
 
-
-
     def visitFunctionCallFactor(self, ctx):
         callCtx = ctx.functionCallStatement()
         funcNameCtx = callCtx.functionName()
-        funcSTE = funcNameCtx.entry
-        functionName = funcSTE.getName()
+        funcCallSTE = funcNameCtx.entry
+        functionName = funcCallSTE.getName()
 
-        text = functionName + "("
+        text = ''
+        if funcCallSTE.isNested():
+            text = 'Local.'
+
+        text += functionName + "("
 
         if callCtx.argumentList() is not None:
             text += self.visit(callCtx.argumentList())

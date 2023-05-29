@@ -451,6 +451,8 @@ class Semantics(GraspVisitor):
         routineId.setRoutineCode(Routine.DECLARED)
         if funcCtx.FINAL() is not None:
             routineId.setImmutable(True)
+        if self.symTableStack.getCurrentNestingLevel() > 1:
+            routineId.setNested(True)
         idCtx.entry = routineId
 
         # Append to the parent routine's list of subroutines.

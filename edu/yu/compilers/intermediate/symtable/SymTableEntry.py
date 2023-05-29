@@ -22,6 +22,7 @@ class SymTableEntry:
         subroutines = None  # symTable entries of subroutines
         executable = None  # routine's executable code
         inline = False
+        nestedSubroutine = False  # is this function a nested subroutine
 
     # Constructor.
     #
@@ -203,7 +204,13 @@ class SymTableEntry:
         self.info.executable = executable
 
     def isInline(self):
-        return self.info.inline;
+        return self.info.inline
 
     def setInline(self, inline):
         self.info.inline = inline
+
+    def isNested(self):
+        return self.info.nestedSubroutine
+
+    def setNested(self, nested):
+        self.info.nestedSubroutine = nested
